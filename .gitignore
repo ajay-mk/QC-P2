@@ -1,0 +1,4 @@
+cmake-build-debug
+.clang-format
+*xml
+*.iml
