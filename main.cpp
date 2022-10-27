@@ -35,7 +35,7 @@ std::vector<libint2::Atom> read_geometry(const std::string & filename){
     if(filename.rfind(".xyz"))
         return libint2::read_dotxyz(input);
     else
-        throw std::invalid_argument("Only .xyz are accepted as input");
+        throw std::invalid_argument("Only .xyz files accepted as input");
 }
 
 
