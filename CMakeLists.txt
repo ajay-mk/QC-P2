@@ -10,4 +10,4 @@ find_package(Libint2 REQUIRED)
 add_executable(P2 main.cpp hf.cpp)
 
 target_link_libraries(P2 Eigen3::Eigen)
-target_link_libraries(P2 Libint::libint2)
+target_link_libraries(P2 Libint2::libint2)
