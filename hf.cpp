@@ -99,21 +99,6 @@ std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell
     return result;
 }
 
-size_t max_nprim(const std::vector<libint2::Shell> &shells) {
-    size_t n = 0;
-    for (auto shell: shells)
-        n = std::max(shell.nprim(), n);
-    return n;
-}
-
-int max_l(const std::vector<libint2::Shell> &shells) {
-    int l = 0;
-    for (auto shell: shells)
-        for (auto c: shell.contr)
-            l = std::max(c.l, l);
-    return l;
-}
-
 
 Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
                           libint2::Operator obtype,
