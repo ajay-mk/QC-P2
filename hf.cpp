@@ -99,7 +99,6 @@ std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell
     return result;
 }
 
-
 Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
                           libint2::Operator obtype,
                           const std::vector<libint2::Atom>& atoms)
@@ -180,7 +179,6 @@ Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
 }
 
 // Fock Builder
-
 
 Matrix compute_2body_fock_simple(const std::vector<libint2::Shell> &shells,
                                  const Matrix &D) {
