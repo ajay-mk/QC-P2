@@ -99,29 +99,8 @@ int main(int argc, char *argv[]) {
     T.resize(0, 0);
     V.resize(0, 0);
 
-    /*** =========================== ***/
-    /*** build initial-guess density ***/
-    /*** =========================== ***/
-
-    const auto use_hcore_guess = false;// use core Hamiltonian eigenstates to guess density?
-                                       // set to true to match the result of versions 0, 1, and 2 of the code
-                                       // HOWEVER !!! even for medium-size molecules hcore will usually fail !!!
-                                       // thus set to false to use Superposition-Of-Atomic-Densities (SOAD) guess
     Matrix D;
-    if (use_hcore_guess) {// hcore guess
-        // solve H C = e S C
-        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> gen_eig_solver(H, S);
-        auto eps = gen_eig_solver.eigenvalues();
-        auto C = gen_eig_solver.eigenvectors();
-        cout << "\n\tInitial C Matrix:\n";
-        cout << C << endl;
-
-        // compute density, D = C(occ) . C(occ)T
-        auto C_occ = C.leftCols(ndocc);
-        D = C_occ * C_occ.transpose();
-    } else {// SOAD as the guess density, assumes STO-nG basis
-        D = compute_soad(atoms);
-    }
+    D = compute_soad(atoms);
 
     cout << "\n\tInitial Density Matrix:\n";
     cout << D << endl;
