@@ -10,19 +10,23 @@
 #include <libint2/statics_definition.h>
 #endif
 
-
 // Typedefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 
-// Calculation Parameters (Will add function to read from config file)
-std::string basis = "STO-3G";
-const auto maxiter = 200;
-const real_t conv = 1e-12;
+struct params {
+    std::string type;
+    std::string basis;
+    int maxiter;
+    real_t conv;
+};
+
 
 // Functions
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
+params read_config(const std::string& config_file);
+
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
 Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
@@ -52,9 +56,14 @@ int main(int argc, char *argv[]) {
 
     cout << std::setprecision(12);
 
-    // Reading geometry from input file
-    const auto filename = argv[1];
-    std::vector<libint2::Atom> atoms = read_geometry(filename);
+    // Reading geometry and config from input files
+    std::vector<libint2::Atom> atoms = read_geometry(argv[1]);
+    auto config = read_config(argv[2]);
+
+    // Calculation Parameters (Will add function to read from config file)
+    std::string basis = config.basis;
+    const auto maxiter = config.maxiter;
+    const real_t conv = config.conv;
 
     // Counting the number of electrons
     auto nelectron = 0;

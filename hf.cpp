@@ -24,21 +24,28 @@ using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 
 // Structs
-struct calc_params {
-    std::string calc_type;
-    double scf_conv;
-    int max_iter;
+struct params {
+    std::string type;
+    std::string basis;
+    int maxiter;
+    real_t conv;
 };
 
 // Function Definitions
 
-calc_params read_config(const std::string& config_file){
+params read_config(const std::string& config_file){
     std::cout << "Reading configurations from " << config_file << std::endl;
     // For now setting some sample numbers
-    calc_params params;
-    params.scf_conv = 1e-10;
-    params.max_iter = 200;
-    return params;
+    params config;
+    std::ifstream input (config_file);
+    if (input.is_open()){
+        input >> config.type;
+        input >> config.basis;
+        input >> config.maxiter;
+        input >> config.conv;
+    }
+
+    return config;
 }
 
 // Reading Geometry from input file
