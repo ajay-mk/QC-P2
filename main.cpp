@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
     } while (((fabs(ediff) > conv) || (fabs(rmsd) > conv)) && (iter < maxiter));
 
     cout << endl
-         << "Hartree-Fock Energy = " << ehf + enuc << endl;
+         << "Hartree-Fock Energy = " << ehf + enuc << " Eh" << endl;
 
     libint2::finalize();// done with libint
 
