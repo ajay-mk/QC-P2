@@ -10,21 +10,24 @@
 #include <libint2/statics_definition.h>
 #endif
 
-// Calculation Parameters (Will add function to read from config file)
-std::string basis = "STO-3G";
 
 // Typedefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
+
+// Calculation Parameters (Will add function to read from config file)
+std::string basis = "STO-3G";
+const auto maxiter = 200;
+const real_t conv = 1e-12;
 
 // Functions
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
-
 Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
 double compute_enuc(const std::vector<libint2::Atom> &atoms);
+
 Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
                           libint2::Operator t,
                           const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
@@ -100,14 +103,13 @@ int main(int argc, char *argv[]) {
     V.resize(0, 0);
 
     Matrix D;
-    D = compute_soad(atoms);
+    //D = compute_soad(atoms);
+    D = H;
 
     cout << "\n\tInitial Density Matrix:\n";
     cout << D << endl;
 
     // SCF Loop
-    const auto maxiter = 100;
-    const real_t conv = 1e-12;
     auto iter = 0;
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
