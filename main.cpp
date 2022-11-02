@@ -89,22 +89,22 @@ int main(int argc, char *argv[]) {
 
     // Overlap Integrals
     auto S = compute_1body_ints(obs.shells(), Operator::overlap);
-    cout << "\n\tOverlap Integrals:\n";
+    cout << "\nOverlap Integrals:\n";
     cout << S << endl;
 
     // Kinetic Energy Integrals
     auto T = compute_1body_ints(obs.shells(), Operator::kinetic);
-    cout << "\n\tKinetic-Energy Integrals:\n";
+    cout << "\nKinetic-Energy Integrals:\n";
     cout << T << endl;
 
     // Nuclear Attraction Integrals
     Matrix V = compute_1body_ints(obs.shells(), Operator::nuclear, atoms);
-    cout << "\n\tNuclear Attraction Integrals:\n";
+    cout << "\nNuclear Attraction Integrals:\n";
     cout << V << endl;
 
     // Core Hamiltonian = T + V
     Matrix H = T + V;
-    cout << "\n\tCore Hamiltonian:\n";
+    cout << "\nCore Hamiltonian:\n";
     cout << H << endl;
 
     // T and V no longer needed, free up the memory
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
     //D = compute_soad(atoms);
     D = H;
 
-    cout << "\n\tInitial Density Matrix:\n";
+    cout << "\nInitial Density Matrix:\n";
     cout << D << endl;
 
     // SCF Loop
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
         F += compute_2body_fock(obs.shells(), D);
 
         if (iter == 1) {
-            cout << "\n\tFock Matrix:\n";
+            cout << "\nFock Matrix:\n";
             cout << F << endl;
         }
 

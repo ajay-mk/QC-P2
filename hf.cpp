@@ -8,7 +8,6 @@
 #include <vector>
 #include <istream>
 
-
 #include <Eigen/Eigenvalues>
 #include <Eigen/Dense>
 
