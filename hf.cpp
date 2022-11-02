@@ -8,7 +8,6 @@
 #include <vector>
 #include <istream>
 
-
 #include <Eigen/Eigenvalues>
 #include <Eigen/Dense>
 
@@ -24,21 +23,28 @@ using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 
 // Structs
-struct calc_params {
-    std::string calc_type;
-    double scf_conv;
-    int max_iter;
+struct params {
+    std::string type;
+    std::string basis;
+    int maxiter;
+    real_t conv;
 };
 
 // Function Definitions
 
-calc_params read_config(const std::string& config_file){
+params read_config(const std::string& config_file){
     std::cout << "Reading configurations from " << config_file << std::endl;
     // For now setting some sample numbers
-    calc_params params;
-    params.scf_conv = 1e-10;
-    params.max_iter = 200;
-    return params;
+    params config;
+    std::ifstream input (config_file);
+    if (input.is_open()){
+        input >> config.type;
+        input >> config.basis;
+        input >> config.maxiter;
+        input >> config.conv;
+    }
+
+    return config;
 }
 
 // Reading Geometry from input file
@@ -155,28 +161,28 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
 }
 // Computes Superposition-Of-Atomic-Densities guess for the molecular density matrix
 // in minimal basis; occupies subshells by smearing electrons evenly over the orbitals
-Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
-    // compute number of atomic orbitals
-    size_t nao = 0;
-    for (const auto& atom : atoms) {
-        const auto Z = atom.atomic_number;
-        nao += libint2::sto3g_num_ao(Z);
-    }
-
-    // compute the minimal basis density
-    Matrix D = Matrix::Zero(nao, nao);
-    size_t ao_offset = 0;  // first AO of this atom
-    for (const auto& atom : atoms) {
-        const auto Z = atom.atomic_number;
-        const auto& occvec = libint2::sto3g_ao_occupation_vector(Z);
-        for(const auto& occ: occvec) {
-            D(ao_offset, ao_offset) = occ;
-            ++ao_offset;
-        }
-    }
-
-    return D * 0.5;  // we use densities normalized to # of electrons/2
-}
+//Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
+//    // compute number of atomic orbitals
+//    size_t nao = 0;
+//    for (const auto& atom : atoms) {
+//        const auto Z = atom.atomic_number;
+//        nao += libint2::sto3g_num_ao(Z);
+//    }
+//
+//    // compute the minimal basis density
+//    Matrix D = Matrix::Zero(nao, nao);
+//    size_t ao_offset = 0;  // first AO of this atom
+//    for (const auto& atom : atoms) {
+//        const auto Z = atom.atomic_number;
+//        const auto& occvec = libint2::sto3g_ao_occupation_vector(Z);
+//        for(const auto& occ: occvec) {
+//            D(ao_offset, ao_offset) = occ;
+//            ++ao_offset;
+//        }
+//    }
+//
+//    return D * 0.5;  // we use densities normalized to # of electrons/2
+//}
 
 // Fock Builder
 
