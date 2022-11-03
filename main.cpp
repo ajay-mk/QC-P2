@@ -112,8 +112,17 @@ int main(int argc, char *argv[]) {
     V.resize(0, 0);
 
     Matrix D;
-    //D = compute_soad(atoms);
-    D = H;
+    Matrix D_minbs = compute_soad(atoms);
+    if (basis == "STO-3G") {
+        cout << endl
+             << "Using SAD for initial guess" << endl;
+        D = D_minbs;
+    }
+    else {
+        cout << endl
+             << "Using Core Hamiltonian for initial guess" << endl;
+        D = H;
+    }
 
     cout << "\nInitial Density Matrix:\n";
     cout << D << endl;

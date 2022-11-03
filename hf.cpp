@@ -159,30 +159,30 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
 
     return result;
 }
-// Computes Superposition-Of-Atomic-Densities guess for the molecular density matrix
-// in minimal basis; occupies subshells by smearing electrons evenly over the orbitals
-//Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
-//    // compute number of atomic orbitals
-//    size_t nao = 0;
-//    for (const auto& atom : atoms) {
-//        const auto Z = atom.atomic_number;
-//        nao += libint2::sto3g_num_ao(Z);
-//    }
-//
-//    // compute the minimal basis density
-//    Matrix D = Matrix::Zero(nao, nao);
-//    size_t ao_offset = 0;  // first AO of this atom
-//    for (const auto& atom : atoms) {
-//        const auto Z = atom.atomic_number;
-//        const auto& occvec = libint2::sto3g_ao_occupation_vector(Z);
-//        for(const auto& occ: occvec) {
-//            D(ao_offset, ao_offset) = occ;
-//            ++ao_offset;
-//        }
-//    }
-//
-//    return D * 0.5;  // we use densities normalized to # of electrons/2
-//}
+//Computes Superposition-Of-Atomic-Densities guess for the molecular density matrix
+//in minimal basis; occupies subshells by smearing electrons evenly over the orbitals
+Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
+    // compute number of atomic orbitals
+    size_t nao = 0;
+    for (const auto& atom : atoms) {
+        const auto Z = atom.atomic_number;
+        nao += libint2::sto3g_num_ao(Z);
+    }
+
+    // compute the minimal basis density
+    Matrix D = Matrix::Zero(nao, nao);
+    size_t ao_offset = 0;  // first AO of this atom
+    for (const auto& atom : atoms) {
+        const auto Z = atom.atomic_number;
+        const auto& occvec = libint2::sto3g_ao_occupation_vector(Z);
+        for(const auto& occ: occvec) {
+            D(ao_offset, ao_offset) = occ;
+            ++ao_offset;
+        }
+    }
+
+    return D * 0.5;  // we use densities normalized to # of electrons/2
+}
 
 // Fock Builder
 
