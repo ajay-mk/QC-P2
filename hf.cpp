@@ -30,6 +30,28 @@ struct params {
     real_t conv;
 };
 
+struct scf_results {
+    double energy;
+    Matrix F;
+    Matrix C;
+};
+
+std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
+Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
+double compute_enuc(const std::vector<libint2::Atom> &atoms);
+
+Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
+                          libint2::Operator t,
+                          const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
+
+// simple-to-read, but inefficient Fock builder; computes ~16 times as many ints as possible
+Matrix compute_2body_fock_simple(const std::vector<libint2::Shell> &shells,
+                                 const Matrix &D);
+// an efficient Fock builder; *integral-driven* hence computes permutationally-unique ints once
+Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
+                          const Matrix &D);
+
+
 // Function Definitions
 
 params read_config(const std::string& config_file){
@@ -402,4 +424,115 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
     // symmetrize the result and return
     Matrix Gt = G.transpose();
     return 0.5 * (G + Gt);
+}
+
+
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
+{
+    std::cout << std::endl
+              << "Starting SCF calculation" << std::endl;
+    scf_results results;
+    auto enuc = compute_enuc(atoms);
+//    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
+
+    // Initializing Libint
+    libint2::initialize();
+
+    // Overlap Integrals
+    auto S = compute_1body_ints(obs.shells(), libint2::Operator::overlap);
+//    std::cout << "\nOverlap Integrals:\n";
+//    std::cout << S << std::endl;
+
+    // Kinetic Energy Integrals
+    auto T = compute_1body_ints(obs.shells(), libint2::Operator::kinetic);
+//    std::cout << "\nKinetic-Energy Integrals:\n";
+//    std::cout << T << std::endl;
+
+    // Nuclear Attraction Integrals
+    Matrix V = compute_1body_ints(obs.shells(), libint2::Operator::nuclear, atoms);
+//    std::cout << "\nNuclear Attraction Integrals:\n";
+//    std::cout << V << std::endl;
+
+    // Core Hamiltonian = T + V
+    Matrix H = T + V;
+//    std::cout << "\nCore Hamiltonian:\n";
+//    std::cout << H << std::endl;
+
+    // T and V no longer needed, free up the memory
+    T.resize(0, 0);
+    V.resize(0, 0);
+
+    Matrix D;
+    Matrix D_minbs = compute_soad(atoms);
+    if (config.basis == "STO-3G") {
+        std::cout << std::endl
+             << "Using SAD for initial guess" << std::endl;
+        D = D_minbs;
+    }
+    else {
+        std::cout << std::endl
+             << "Using Core Hamiltonian for initial guess" << std::endl;
+        D = H;
+    }
+
+//    std::cout << "\nInitial Density Matrix:\n";
+//    std::cout << D << std::endl;
+
+    // SCF Loop
+    auto iter = 0;
+    real_t rmsd = 0.0;
+    real_t ediff = 0.0;
+    real_t ehf = 0.0;
+    do {
+        ++iter;
+
+        // Save a copy of the energy and the density
+        auto ehf_last = ehf;
+        auto D_last = D;
+
+        // New Fock matrix
+        auto F = H;
+        //F += compute_2body_fock_simple(shells, D);
+        F += compute_2body_fock(obs.shells(), D);
+
+//        if (iter == 1) {
+//            std::cout << "\nFock Matrix:\n";
+//            std::cout << F << std::endl;
+//        }
+
+        // solve F C = e S C
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> gen_eig_solver(F, S);
+        auto eps = gen_eig_solver.eigenvalues();
+        auto C = gen_eig_solver.eigenvectors();
+
+        // compute density, D = C(occ) . C(occ)T
+        auto C_occ = C.leftCols(ndocc);
+        D = C_occ * C_occ.transpose();
+
+        // compute HF energy
+        ehf = 0.0;
+        for (auto i = 0; i < nao; i++)
+            for (auto j = 0; j < nao; j++)
+                ehf += D(i, j) * (H(i, j) + F(i, j));
+
+        // compute difference with last iteration
+        ediff = ehf - ehf_last;
+        rmsd = (D - D_last).norm();
+
+
+        if (iter == 1)
+            std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
+        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc,
+               ediff, rmsd);
+        results.F = F;
+        results.C = C;
+        results.energy = ehf + enuc;
+
+    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+
+    std::cout << std::endl
+         << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
+
+    libint2::finalize();// done with libint
+    return results;
 }
