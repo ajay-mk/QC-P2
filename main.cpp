@@ -21,27 +21,20 @@ struct params {
     real_t conv;
 };
 
+struct scf_results {
+    double energy;
+    Matrix F;
+    Matrix C;
+};
 
 // Functions
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
 params read_config(const std::string& config_file);
-
 size_t nbasis(const std::vector<libint2::Shell> &shells);
-std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
-Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
-double compute_enuc(const std::vector<libint2::Atom> &atoms);
 
-Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
-                          libint2::Operator t,
-                          const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
-
-// simple-to-read, but inefficient Fock builder; computes ~16 times as many ints as possible
-Matrix compute_2body_fock_simple(const std::vector<libint2::Shell> &shells,
-                                 const Matrix &D);
-// an efficient Fock builder; *integral-driven* hence computes permutationally-unique ints once
-Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
-                          const Matrix &D);
+// Methods
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config);
 
 int main(int argc, char *argv[]) {
 
@@ -50,20 +43,12 @@ int main(int argc, char *argv[]) {
     using std::endl;
 
     using libint2::BasisSet;
-    using libint2::Engine;
-    using libint2::Operator;
-    using libint2::Shell;
 
     cout << std::setprecision(12);
 
     // Reading geometry and config from input files
     std::vector<libint2::Atom> atoms = read_geometry(argv[1]);
     auto config = read_config(argv[2]);
-
-    // Calculation Parameters (Will add function to read from config file)
-    std::string basis = config.basis;
-    const auto maxiter = config.maxiter;
-    const real_t conv = config.conv;
 
     // Counting the number of electrons
     auto nelectron = 0;
@@ -75,102 +60,18 @@ int main(int argc, char *argv[]) {
     cout << "Number of electrons = " << nelectron << endl;
 
 
-    auto enuc = compute_enuc(atoms);
-    cout << "Nuclear repulsion energy = " << enuc << " Eh " << endl;
-
-    BasisSet obs(basis, atoms);
+    BasisSet obs(config.basis, atoms);
     auto nao = nbasis(obs.shells());
     cout << endl
-         << "Basis Set: " << basis << endl
+         << "Method: " << config.type << endl
+         << "Basis Set: " << config.basis << endl
          << "Number of basis functions = " << nao << endl;
 
-    // Initializing Libint
-    libint2::initialize();
-
-    // Overlap Integrals
-    auto S = compute_1body_ints(obs.shells(), Operator::overlap);
-    cout << "\nOverlap Integrals:\n";
-    cout << S << endl;
-
-    // Kinetic Energy Integrals
-    auto T = compute_1body_ints(obs.shells(), Operator::kinetic);
-    cout << "\nKinetic-Energy Integrals:\n";
-    cout << T << endl;
-
-    // Nuclear Attraction Integrals
-    Matrix V = compute_1body_ints(obs.shells(), Operator::nuclear, atoms);
-    cout << "\nNuclear Attraction Integrals:\n";
-    cout << V << endl;
-
-    // Core Hamiltonian = T + V
-    Matrix H = T + V;
-    cout << "\nCore Hamiltonian:\n";
-    cout << H << endl;
-
-    // T and V no longer needed, free up the memory
-    T.resize(0, 0);
-    V.resize(0, 0);
-
-    Matrix D;
-    //D = compute_soad(atoms);
-    D = H;
-
-    cout << "\nInitial Density Matrix:\n";
-    cout << D << endl;
-
-    // SCF Loop
-    auto iter = 0;
-    real_t rmsd = 0.0;
-    real_t ediff = 0.0;
-    real_t ehf = 0.0;
-    do {
-        ++iter;
-
-        // Save a copy of the energy and the density
-        auto ehf_last = ehf;
-        auto D_last = D;
-
-        // New Fock matrix
-        auto F = H;
-        //F += compute_2body_fock_simple(shells, D);
-        F += compute_2body_fock(obs.shells(), D);
-
-        if (iter == 1) {
-            cout << "\nFock Matrix:\n";
-            cout << F << endl;
-        }
-
-        // solve F C = e S C
-        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> gen_eig_solver(F, S);
-        auto eps = gen_eig_solver.eigenvalues();
-        auto C = gen_eig_solver.eigenvectors();
-
-        // compute density, D = C(occ) . C(occ)T
-        auto C_occ = C.leftCols(ndocc);
-        D = C_occ * C_occ.transpose();
-
-        // compute HF energy
-        ehf = 0.0;
-        for (auto i = 0; i < nao; i++)
-            for (auto j = 0; j < nao; j++)
-                ehf += D(i, j) * (H(i, j) + F(i, j));
-
-        // compute difference with last iteration
-        ediff = ehf - ehf_last;
-        rmsd = (D - D_last).norm();
-
-
-        if (iter == 1)
-            std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
-        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc,
-               ediff, rmsd);
-
-    } while (((fabs(ediff) > conv) || (fabs(rmsd) > conv)) && (iter < maxiter));
-
-    cout << endl
-         << "Hartree-Fock Energy = " << ehf + enuc << " Eh" << endl;
-
-    libint2::finalize();// done with libint
-
+    // SCF Calculation
+    if(config.type == "RHF")
+        auto hf_results = RHF(atoms, obs, nao, ndocc, config);
+    else
+        cout << endl
+             << "Unsupported method" << endl;
 }
 
