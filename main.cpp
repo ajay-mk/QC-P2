@@ -21,6 +21,12 @@ struct params {
     real_t conv;
 };
 
+struct scf_results {
+    double energy;
+    int nelectron, Nbasis;
+    Matrix F, C;
+};
+
 
 // Functions
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
