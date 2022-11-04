@@ -35,6 +35,7 @@ size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods
 scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config);
+scf_results UHF();
 
 int main(int argc, char *argv[]) {
 

@@ -536,3 +536,5 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     libint2::finalize();// done with libint
     return results;
 }
+
+scf_results UHF();
