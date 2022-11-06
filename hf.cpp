@@ -202,6 +202,8 @@ Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
 
     return D * 0.5;  // we use densities normalized to # of electrons/2
 }
+// SAD guess only works for STO-3G now, should fix this
+
 
 // Fock Builder
 Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
