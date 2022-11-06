@@ -277,15 +277,10 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
                     auto s12_34_deg = (s1 == s3) ? (s2 == s4 ? 1.0 : 2.0) : 2.0;
                     auto s1234_deg = s12_deg * s34_deg * s12_34_deg;
 
-                    const auto tstart = std::chrono::high_resolution_clock::now();
-
                     engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
                     const auto *buf_1234 = buf[0];
                     if (buf_1234 == nullptr)
                         continue;// if all integrals screened out, skip to next quartet
-
-                    const auto tstop = std::chrono::high_resolution_clock::now();
-                    time_elapsed += tstop - tstart;
 
                     // ANSWER
                     // 1) each shell set of integrals contributes up to 6 shell sets of the Fock matrix:
