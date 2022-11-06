@@ -9,7 +9,6 @@
 #include <istream>
 
 #include <Eigen/Eigenvalues>
-#include <Eigen/Dense>
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
