@@ -30,7 +30,13 @@ struct params {
     real_t conv;
 };
 
-struct scf_results {
+struct rhf_results {
+    double energy;
+    Matrix F;
+    Matrix C;
+};
+
+struct uhf_results {
     double energy;
     Matrix F;
     Matrix C;
@@ -329,11 +335,11 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
 }
 
 
-scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
+rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
 {
     std::cout << std::endl
               << "Starting SCF calculation" << std::endl;
-    scf_results results;
+    rhf_results results;
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
 
@@ -439,7 +445,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 
-scf_results UHF(){
-    scf_results results;
+uhf_results UHF(){
+    uhf_results results;
     return results;
 }
