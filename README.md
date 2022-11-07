@@ -5,4 +5,4 @@
 - [Libint](https://github.com/evaleev/libint)
 
 #### Capabilities
-- RHF
+- Restricted Hartree-Fock

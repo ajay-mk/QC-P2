@@ -1,4 +1,4 @@
-// Contains functions relevant to Hartree Fock Algorithm
+// Contains functions relevant to Hartree-Fock Algorithm
 //
 // Created by Ajay Melekamburath on 10/26/22.
 //
@@ -9,7 +9,6 @@
 #include <istream>
 
 #include <Eigen/Eigenvalues>
-#include <Eigen/Dense>
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
@@ -30,7 +29,13 @@ struct params {
     real_t conv;
 };
 
-struct scf_results {
+struct rhf_results {
+    double energy;
+    Matrix F;
+    Matrix C;
+};
+
+struct uhf_results {
     double energy;
     Matrix F;
     Matrix C;
@@ -44,9 +49,6 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
                           libint2::Operator t,
                           const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
 
-// simple-to-read, but inefficient Fock builder; computes ~16 times as many ints as possible
-Matrix compute_2body_fock_simple(const std::vector<libint2::Shell> &shells,
-                                 const Matrix &D);
 // an efficient Fock builder; *integral-driven* hence computes permutationally-unique ints once
 Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
                           const Matrix &D);
@@ -205,100 +207,10 @@ Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
 
     return D * 0.5;  // we use densities normalized to # of electrons/2
 }
+// SAD guess only works for STO-3G now, should fix this
+
 
 // Fock Builder
-
-Matrix compute_2body_fock_simple(const std::vector<libint2::Shell> &shells,
-                                 const Matrix &D) {
-
-    using libint2::Engine;
-    using libint2::Operator;
-    using libint2::Shell;
-
-    const auto n = nbasis(shells);
-    Matrix G = Matrix::Zero(n, n);
-
-    // construct the electron repulsion integrals engine
-    Engine engine(Operator::coulomb, max_nprim(shells), max_l(shells), 0);
-
-    auto shell2bf = map_shell_to_basis_function(shells);
-
-    // buf[0] points to the target shell set after every call  to engine.compute()
-    const auto &buf = engine.results();
-
-    // loop over shell pairs of the Fock matrix, {s1,s2}
-    // Fock matrix is symmetric, but skipping it here for simplicity (see compute_2body_fock)
-    for (auto s1 = 0; s1 != shells.size(); ++s1) {
-
-        auto bf1_first = shell2bf[s1];// first basis function in this shell
-        auto n1 = shells[s1].size();
-
-        for (auto s2 = 0; s2 != shells.size(); ++s2) {
-
-            auto bf2_first = shell2bf[s2];
-            auto n2 = shells[s2].size();
-
-            // loop over shell pairs of the density matrix, {s3,s4}
-            // again symmetry is not used for simplicity
-            for (auto s3 = 0; s3 != shells.size(); ++s3) {
-
-                auto bf3_first = shell2bf[s3];
-                auto n3 = shells[s3].size();
-
-                for (auto s4 = 0; s4 != shells.size(); ++s4) {
-
-                    auto bf4_first = shell2bf[s4];
-                    auto n4 = shells[s4].size();
-
-                    // Coulomb contribution to the Fock matrix is from {s1,s2,s3,s4} integrals
-                    engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
-                    const auto *buf_1234 = buf[0];
-                    if (buf_1234 == nullptr)
-                        continue;// if all integrals screened out, skip to next quartet
-
-                    // we don't have an analog of Eigen for tensors (yet ... see github.com/BTAS/BTAS, under development)
-                    // hence some manual labor here:
-                    // 1) loop over every integral in the shell set (= nested loops over basis functions in each shell)
-                    // and 2) add contribution from each integral
-                    for (auto f1 = 0, f1234 = 0; f1 != n1; ++f1) {
-                        const auto bf1 = f1 + bf1_first;
-                        for (auto f2 = 0; f2 != n2; ++f2) {
-                            const auto bf2 = f2 + bf2_first;
-                            for (auto f3 = 0; f3 != n3; ++f3) {
-                                const auto bf3 = f3 + bf3_first;
-                                for (auto f4 = 0; f4 != n4; ++f4, ++f1234) {
-                                    const auto bf4 = f4 + bf4_first;
-                                    G(bf1, bf2) += D(bf3, bf4) * 2.0 * buf_1234[f1234];
-                                }
-                            }
-                        }
-                    }
-
-                    // exchange contribution to the Fock matrix is from {s1,s3,s2,s4} integrals
-                    engine.compute(shells[s1], shells[s3], shells[s2], shells[s4]);
-                    const auto *buf_1324 = buf[0];
-
-                    for (auto f1 = 0, f1324 = 0; f1 != n1; ++f1) {
-                        const auto bf1 = f1 + bf1_first;
-                        for (auto f3 = 0; f3 != n3; ++f3) {
-                            const auto bf3 = f3 + bf3_first;
-                            for (auto f2 = 0; f2 != n2; ++f2) {
-                                const auto bf2 = f2 + bf2_first;
-                                for (auto f4 = 0; f4 != n4; ++f4, ++f1324) {
-                                    const auto bf4 = f4 + bf4_first;
-                                    G(bf1, bf2) -= D(bf3, bf4) * buf_1324[f1324];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return G;
-}
-
 Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
                           const Matrix &D) {
 
@@ -372,15 +284,10 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
                     auto s12_34_deg = (s1 == s3) ? (s2 == s4 ? 1.0 : 2.0) : 2.0;
                     auto s1234_deg = s12_deg * s34_deg * s12_34_deg;
 
-                    const auto tstart = std::chrono::high_resolution_clock::now();
-
                     engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
                     const auto *buf_1234 = buf[0];
                     if (buf_1234 == nullptr)
                         continue;// if all integrals screened out, skip to next quartet
-
-                    const auto tstop = std::chrono::high_resolution_clock::now();
-                    time_elapsed += tstop - tstart;
 
                     // ANSWER
                     // 1) each shell set of integrals contributes up to 6 shell sets of the Fock matrix:
@@ -427,11 +334,11 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
 }
 
 
-scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
+rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
 {
     std::cout << std::endl
               << "Starting SCF calculation" << std::endl;
-    scf_results results;
+    rhf_results results;
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
 
@@ -470,6 +377,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         D = D_minbs;
     }
     else {
+        // Currently SOAD only works for STO-3G
         std::cout << std::endl
              << "Using Core Hamiltonian for initial guess" << std::endl;
         D = H;
@@ -534,5 +442,10 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
          << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
     libint2::finalize();// done with libint
+    return results;
+}
+
+uhf_results UHF(){
+    uhf_results results;
     return results;
 }
