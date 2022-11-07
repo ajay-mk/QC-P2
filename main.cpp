@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
          << "Basis Set: " << config.basis << endl
          << "Number of basis functions = " << nao << endl;
 
-    // SCF Calculation
+    // Main
     if(config.type == "RHF")
         auto hf_results = RHF(atoms, obs, nao, ndocc, config);
     if(config.type == "UHF")

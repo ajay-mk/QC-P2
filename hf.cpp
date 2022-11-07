@@ -1,4 +1,4 @@
-// Contains functions relevant to Hartree Fock Algorithm
+// Contains functions relevant to Hartree-Fock Algorithm
 //
 // Created by Ajay Melekamburath on 10/26/22.
 //
@@ -377,6 +377,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         D = D_minbs;
     }
     else {
+        // Currently SOAD only works for STO-3G
         std::cout << std::endl
              << "Using Core Hamiltonian for initial guess" << std::endl;
         D = H;
