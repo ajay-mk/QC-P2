@@ -446,6 +446,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 }
 
 uhf_results UHF(){
+    std::cout << "Running UHF Calculation" << std::endl;
     uhf_results results;
     return results;
 }

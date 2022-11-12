@@ -79,8 +79,5 @@ int main(int argc, char *argv[]) {
         auto hf_results = RHF(atoms, obs, nao, ndocc, config);
     if(config.type == "UHF")
         auto uhf_results = UHF();
-    else
-        cout << endl
-             << "Unsupported method" << endl;
 }
 
