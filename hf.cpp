@@ -47,9 +47,7 @@ std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell
 Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
 double compute_enuc(const std::vector<libint2::Atom> &atoms);
 
-Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
-                          libint2::Operator t,
-                          const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
+Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells, libint2::Operator t, const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
 
 Matrix density_guess(int nocc, int nao);
 Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
@@ -137,9 +135,7 @@ std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell
     return result;
 }
 
-Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
-                          libint2::Operator obtype,
-                          const std::vector<libint2::Atom>& atoms)
+Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells, libint2::Operator obtype, const std::vector<libint2::Atom>& atoms)
 {
     using libint2::Shell;
     using libint2::Engine;
@@ -190,7 +186,10 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells,
     }
 
     return result;
+
 }
+
+
 //Computes Superposition-Of-Atomic-Densities guess for the molecular density matrix
 //in minimal basis; occupies subshells by smearing electrons evenly over the orbitals
 Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
@@ -637,8 +636,13 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
+        results.energy = euhf + enuc;
+        results.Fa = Falpha, results.Fb = Fbeta;
+        results.Ca = C_alpha, results.Cb = C_beta;
 
     } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+    std::cout << std::endl
+              << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
     return results;
 }
