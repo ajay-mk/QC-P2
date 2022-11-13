@@ -25,6 +25,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 struct params {
     std::string type;
     std::string basis;
+    double multiplicity;
     int maxiter;
     real_t conv;
 };
@@ -37,8 +38,9 @@ struct rhf_results {
 
 struct uhf_results {
     double energy;
-    Matrix F;
-    Matrix C;
+    int nalpha, nbeta;
+    Matrix Fa, Fb;
+    Matrix Ca, Cb;
 };
 
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
@@ -49,21 +51,27 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells,
                           libint2::Operator t,
                           const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
 
-// an efficient Fock builder; *integral-driven* hence computes permutationally-unique ints once
-Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
-                          const Matrix &D);
+Matrix density_guess(int nocc, int nao);
+Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
+Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds);
 
 
 // Function Definitions
 
 params read_config(const std::string& config_file){
     std::cout << "Reading configurations from " << config_file << std::endl;
-    // For now setting some sample numbers
     params config;
+    // Expected Format of Config File
+    // Method
+    // Multiplicity
+    // Basis Set
+    // SCF Max. Iter.
+    // SCF Conv
     std::ifstream input (config_file);
     if (input.is_open()){
         input >> config.type;
         input >> config.basis;
+        input >> config.multiplicity;
         input >> config.maxiter;
         input >> config.conv;
     }
@@ -209,16 +217,22 @@ Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
 }
 // SAD guess only works for STO-3G now, should fix this
 
+// Guessing Initial Density - Adds 1 as diagonal elements for all occupied electrons
+Matrix density_guess(int nocc, int nao)
+{
+    Matrix guess = Matrix::Zero(nao, nao);
+    for(int i= 0; i < nocc; i++)
+        guess(i, i) = 1.0;
+    return guess;
+}
 
 // Fock Builder
-Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
+Matrix build_fock(const std::vector<libint2::Shell> &shells,
                           const Matrix &D) {
 
     using libint2::Engine;
     using libint2::Operator;
     using libint2::Shell;
-
-    auto time_elapsed = std::chrono::duration<double>::zero();
 
     const auto n = nbasis(shells);
     Matrix G = Matrix::Zero(n, n);
@@ -333,14 +347,99 @@ Matrix compute_2body_fock(const std::vector<libint2::Shell> &shells,
     return 0.5 * (G + Gt);
 }
 
+Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells,
+                  const Matrix &D, const Matrix &Ds) {
 
-rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config)
+    using libint2::Engine;
+    using libint2::Operator;
+    using libint2::Shell;
+
+    const auto n = nbasis(shells);
+    Matrix G = Matrix::Zero(n, n);
+
+    // construct the 2-electron repulsion integrals engine
+    Engine engine(Operator::coulomb, max_nprim(shells), max_l(shells), 0);
+
+    auto shell2bf = map_shell_to_basis_function(shells);
+
+    const auto &buf = engine.results();
+
+
+    // loop over permutationally-unique set of shells
+    for (auto s1 = 0; s1 != shells.size(); ++s1) {
+
+        auto bf1_first = shell2bf[s1];// first basis function in this shell
+        auto n1 = shells[s1].size();  // number of basis functions in this shell
+
+        for (auto s2 = 0; s2 <= s1; ++s2) {
+
+            auto bf2_first = shell2bf[s2];
+            auto n2 = shells[s2].size();
+
+            for (auto s3 = 0; s3 <= s1; ++s3) {
+
+                auto bf3_first = shell2bf[s3];
+                auto n3 = shells[s3].size();
+
+                const auto s4_max = (s1 == s3) ? s2 : s3;
+                for (auto s4 = 0; s4 <= s4_max; ++s4) {
+
+                    auto bf4_first = shell2bf[s4];
+                    auto n4 = shells[s4].size();
+
+                    // compute the permutational degeneracy (i.e. # of equivalents) of the given shell set
+                    auto s12_deg = (s1 == s2) ? 1.0 : 2.0;
+                    auto s34_deg = (s3 == s4) ? 1.0 : 2.0;
+                    auto s12_34_deg = (s1 == s3) ? (s2 == s4 ? 1.0 : 2.0) : 2.0;
+                    auto s1234_deg = s12_deg * s34_deg * s12_34_deg;
+
+                    engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
+                    const auto *buf_1234 = buf[0];
+                    if (buf_1234 == nullptr)
+                        continue;// if all integrals screened out, skip to next quartet
+
+                    for (auto f1 = 0, f1234 = 0; f1 != n1; ++f1) {
+                        const auto bf1 = f1 + bf1_first;
+                        for (auto f2 = 0; f2 != n2; ++f2) {
+                            const auto bf2 = f2 + bf2_first;
+                            for (auto f3 = 0; f3 != n3; ++f3) {
+                                const auto bf3 = f3 + bf3_first;
+                                for (auto f4 = 0; f4 != n4; ++f4, ++f1234) {
+                                    const auto bf4 = f4 + bf4_first;
+
+                                    const auto value = buf_1234[f1234];
+
+                                    const auto value_scal_by_deg = value * s1234_deg;
+
+                                    G(bf1, bf2) += D(bf3, bf4) * value_scal_by_deg;
+                                    G(bf3, bf4) += D(bf1, bf2) * value_scal_by_deg;
+                                    G(bf1, bf3) -= 0.25 * Ds(bf2, bf4) * value_scal_by_deg;
+                                    G(bf2, bf4) -= 0.25 * Ds(bf1, bf3) * value_scal_by_deg;
+                                    G(bf1, bf4) -= 0.25 * Ds(bf2, bf3) * value_scal_by_deg;
+                                    G(bf2, bf3) -= 0.25 * Ds(bf1, bf4) * value_scal_by_deg;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // symmetrize the result and return
+    Matrix Gt = G.transpose();
+    return 0.5 * (G + Gt);
+}
+
+
+rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
 {
     std::cout << std::endl
-              << "Starting SCF calculation" << std::endl;
+              << "Starting RHF calculation" << std::endl;
     rhf_results results;
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
+    auto ndocc = nelectron/2;
 
     // Initializing Libint
     libint2::initialize();
@@ -377,10 +476,10 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         D = D_minbs;
     }
     else {
-        // Currently SOAD only works for STO-3G
+        //D = H;
         std::cout << std::endl
-             << "Using Core Hamiltonian for initial guess" << std::endl;
-        D = H;
+             << "Building initial guess" << std::endl;
+        D = density_guess(ndocc, nao);
     }
 
 //    std::cout << "\nInitial Density Matrix:\n";
@@ -401,7 +500,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         // New Fock matrix
         auto F = H;
         //F += compute_2body_fock_simple(shells, D);
-        F += compute_2body_fock(obs.shells(), D);
+        F += build_fock(obs.shells(), D);
 
 //        if (iter == 1) {
 //            std::cout << "\nFock Matrix:\n";
@@ -430,8 +529,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
-        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc,
-               ediff, rmsd);
+        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
         results.F = F;
         results.C = C;
         results.energy = ehf + enuc;
@@ -445,8 +543,102 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 
-uhf_results UHF(){
-    std::cout << "Running UHF Calculation" << std::endl;
+uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
     uhf_results results;
+    results.nbeta = (nelectron - config.multiplicity + 1)/2;
+    results.nalpha = results.nbeta + (config.multiplicity - 1);
+
+    std::cout << std::endl
+              << "Number of alpha electrons: " << results.nalpha << std::endl
+              << "Number of beta electrons: " << results.nbeta << std::endl;
+
+    std::cout << std::endl
+              << "Starting RHF calculation" << std::endl;
+    auto enuc = compute_enuc(atoms);
+    //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
+
+    // Initializing Libint
+    libint2::initialize();
+
+    // Overlap Integrals
+    auto S = compute_1body_ints(obs.shells(), libint2::Operator::overlap);
+    //    std::cout << "\nOverlap Integrals:\n";
+    //    std::cout << S << std::endl;
+
+    // Kinetic Energy Integrals
+    auto T = compute_1body_ints(obs.shells(), libint2::Operator::kinetic);
+    //    std::cout << "\nKinetic-Energy Integrals:\n";
+    //    std::cout << T << std::endl;
+
+    // Nuclear Attraction Integrals
+    Matrix V = compute_1body_ints(obs.shells(), libint2::Operator::nuclear, atoms);
+    //    std::cout << "\nNuclear Attraction Integrals:\n";
+    //    std::cout << V << std::endl;
+
+    // Core Hamiltonian = T + V
+    Matrix H = T + V;
+    //    std::cout << "\nCore Hamiltonian:\n";
+    //    std::cout << H << std::endl;
+
+    // T and V no longer needed, free up the memory
+    T.resize(0, 0);
+    V.resize(0, 0);
+
+    // Building Initial Densities
+    Matrix Dalpha = density_guess(results.nalpha, nao);
+    Matrix Dbeta = density_guess(results.nbeta, nao);
+    Matrix D = Dalpha + Dbeta; // Total Density Matrix
+
+    // SCF Loop
+    auto iter = 0;
+    real_t rmsd = 0.0;
+    real_t ediff = 0.0;
+    real_t euhf = 0.0;
+    do{
+        ++iter;
+
+        // Save copy of energy and density
+        auto euhf_last = euhf;
+        auto D_last = D;
+
+        // New Fock Matrices
+        auto Falpha = H;
+        Falpha += build_uhf_fock(obs.shells(), D, Dalpha);
+        auto Fbeta = H;
+        Fbeta += build_uhf_fock(obs.shells(), D, Dbeta);
+
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver1(Falpha, S);
+        auto eps_alpha = solver1.eigenvalues();
+        auto C_alpha = solver1.eigenvectors();
+
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver2(Fbeta, S);
+        auto eps_beta = solver2.eigenvalues();
+        auto C_beta = solver2.eigenvectors();
+
+        // Density Matrices
+        auto Ca_occ = C_alpha.leftCols(results.nalpha);
+        Dalpha = Ca_occ * Ca_occ.transpose();
+
+        auto Cb_occ = C_beta.leftCols(results.nbeta);
+        Dbeta = Cb_occ * Cb_occ.transpose();
+
+        D = Dalpha + Dbeta;
+
+        // UHF Energy
+        euhf = 0.0;
+        for (auto i = 0; i < nao; i++)
+            for (auto j = 0; j < nao; j++)
+                euhf += D(i, j) * H(i, j) + Dalpha(i, j) * Falpha(i, j) + Dbeta(i, j) * Fbeta(i, j);
+
+        // compute difference with last iteration
+        ediff = euhf - euhf_last;
+        rmsd = (D - D_last).norm();
+
+        if (iter == 1)
+            std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
+        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
+
+    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+
     return results;
 }

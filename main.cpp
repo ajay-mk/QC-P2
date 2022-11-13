@@ -17,6 +17,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 struct params {
     std::string type;
     std::string basis;
+    double multiplicity;
     int maxiter;
     real_t conv;
 };
@@ -29,8 +30,9 @@ struct rhf_results {
 
 struct uhf_results {
     double energy;
-    Matrix F;
-    Matrix C;
+    int nalpha, nbeta;
+    Matrix Fa, Fb;
+    Matrix Ca, Cb;
 };
 
 // Functions
@@ -40,8 +42,8 @@ params read_config(const std::string& config_file);
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods
-rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t ndocc, params config);
-uhf_results UHF();
+rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
+uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
 
 int main(int argc, char *argv[]) {
 
@@ -76,8 +78,8 @@ int main(int argc, char *argv[]) {
 
     // Main
     if(config.type == "RHF")
-        auto hf_results = RHF(atoms, obs, nao, ndocc, config);
+        auto hf_results = RHF(atoms, obs, nao, nelectron, config);
     if(config.type == "UHF")
-        auto uhf_results = UHF();
+        auto uhf_results = UHF(atoms, obs, nao, nelectron, config);
 }
 
