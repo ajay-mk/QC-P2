@@ -84,5 +84,3 @@ int main(int argc, char *argv[]) {
 }
 
 // EOF
-///TODO: Change RHF and UHF functions to directly deal with results.variables
-///TODO: Dictionary type construct for config

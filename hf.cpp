@@ -401,7 +401,7 @@ real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , co
     return 0.5 * energy;
 
 }
-
+///TODO: Change RHF and UHF functions to directly deal with results.variables
 scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
 {
     std::cout << std::endl
@@ -514,7 +514,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     libint2::finalize();// done with libint
     return results;
 }
-
+///TODO: Change RHF and UHF functions to directly deal with results.variables
 scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
     scf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1)/2;

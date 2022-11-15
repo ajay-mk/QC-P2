@@ -27,7 +27,7 @@ struct params {
 };
 
 // Function Definitions
-
+///TODO: Dictionary type construct for config
 params read_config(const std::string& config_file){
     std::cout << "Reading configurations from " << config_file << std::endl;
     params config;
