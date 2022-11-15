@@ -23,6 +23,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 
 // Structs
 struct params {
+    std::string inputfile;
     std::string type;
     std::string basis;
     double multiplicity;
@@ -411,11 +412,11 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     auto ndocc = nelectron/2;
 
     // Occupied and Virtual Orbitals
-    auto noo = 2 * (nelectron/2);
-    auto nvo = (2 * nao) - noo;
+    results.noo = 2 * (nelectron/2);
+    results.nvo = (2 * nao) - results.noo;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << noo << std::endl
-              << "Number of virtual orbitals: " << nvo << std::endl;
+              << "Number of occupied orbitals: " << results.noo << std::endl
+              << "Number of virtual orbitals: " << results.nvo << std::endl;
 
     // Initializing Libint
     libint2::initialize();
@@ -503,8 +504,6 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
-//        results.F = F;
-//        results.C = C;
         results.energy = ehf + enuc;
 
     } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
@@ -526,11 +525,11 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
               << "Number of beta electrons: " << results.nbeta << std::endl;
 
     // Occupied and Virtual Orbitals
-    auto noo = 2 * (nelectron/2);
-    auto nvo = (2 * nao) - noo;
+    results.noo = 2 * (nelectron/2);
+    results.nvo = (2 * nao) - results.noo;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << noo << std::endl
-              << "Number of virtual orbitals: " << nvo << std::endl;
+              << "Number of occupied orbitals: " << results.noo << std::endl
+              << "Number of virtual orbitals: " << results.nvo << std::endl;
 
     std::cout << std::endl
               << "Starting UHF calculation" << std::endl;

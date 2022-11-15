@@ -18,6 +18,7 @@ using real_t = libint2::scalar_type;
 
 // Structs
 struct params {
+    std::string inputfile;
     std::string type;
     std::string basis;
     double multiplicity;
@@ -31,6 +32,7 @@ params read_config(const std::string& config_file){
     std::cout << "Reading configurations from " << config_file << std::endl;
     params config;
     // Expected Format of Config File
+    // Input Geometry
     // Method
     // Basis Set
     // Multiplicity
@@ -38,6 +40,7 @@ params read_config(const std::string& config_file){
     // SCF Conv
     std::ifstream input (config_file);
     if (input.is_open()){
+        input >> config.inputfile;
         input >> config.type;
         input >> config.basis;
         input >> config.multiplicity;

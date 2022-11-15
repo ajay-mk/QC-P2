@@ -15,6 +15,7 @@ using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 
 struct params {
+    std::string inputfile;
     std::string type;
     std::string basis;
     double multiplicity;
@@ -49,8 +50,8 @@ int main(int argc, char *argv[]) {
     cout << std::setprecision(12);
 
     // Reading geometry and config from input files
-    std::vector<libint2::Atom> atoms = read_geometry(argv[1]);
-    auto config = read_config(argv[2]);
+    auto config = read_config(argv[1]);
+    std::vector<libint2::Atom> atoms = read_geometry(config.inputfile);
 
     // Counting the number of electrons
     auto nelectron = 0;
