@@ -618,3 +618,5 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 
     return results;
 }
+
+// EOF
