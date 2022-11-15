@@ -22,17 +22,10 @@ struct params {
     real_t conv;
 };
 
-struct rhf_results {
-    double energy;
-    Matrix F;
-    Matrix C;
-};
-
-struct uhf_results {
-    double energy;
-    int nalpha, nbeta;
-    Matrix Fa, Fb;
-    Matrix Ca, Cb;
+struct scf_results{
+    real_t energy;
+    int nalpha, nbeta, noo, nvo;
+    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
 };
 
 // Functions
@@ -42,8 +35,8 @@ params read_config(const std::string& config_file);
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods
-rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
-uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
+scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
 
 int main(int argc, char *argv[]) {
 
@@ -90,3 +83,5 @@ int main(int argc, char *argv[]) {
 }
 
 // EOF
+///TODO: Change RHF and UHF functions to directly deal with results.variables
+///TODO: Dictionary type construct for config

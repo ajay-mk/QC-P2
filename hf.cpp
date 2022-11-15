@@ -30,17 +30,10 @@ struct params {
     real_t conv;
 };
 
-struct rhf_results {
-    double energy;
-    Matrix F;
-    Matrix C;
-};
-
-struct uhf_results {
-    double energy;
-    int nalpha, nbeta;
-    Matrix Fa, Fb;
-    Matrix Ca, Cb;
+struct scf_results{
+    real_t energy;
+    int nalpha, nbeta, noo, nvo;
+    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
 };
 
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
@@ -408,11 +401,11 @@ real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , co
 
 }
 
-rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
 {
     std::cout << std::endl
               << "Starting RHF calculation" << std::endl;
-    rhf_results results;
+    scf_results results;
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
     auto ndocc = nelectron/2;
@@ -510,8 +503,8 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
-        results.F = F;
-        results.C = C;
+//        results.F = F;
+//        results.C = C;
         results.energy = ehf + enuc;
 
     } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
@@ -523,8 +516,8 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 
-uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
-    uhf_results results;
+scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
+    scf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1)/2;
     results.nalpha = results.nbeta + config.multiplicity - 1;
 
@@ -623,8 +616,8 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
         results.energy =  euhf + enuc;
-        results.Fa = Falpha, results.Fb = Fbeta;
-        results.Ca = C_alpha, results.Cb = C_beta;
+//        results.Fa = Falpha, results.Fb = Fbeta;
+//        results.Ca = C_alpha, results.Cb = C_beta;
 
     } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
     std::cout << std::endl
