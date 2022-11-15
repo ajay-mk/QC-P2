@@ -3,6 +3,7 @@ project(P2)
 
 set(CMAKE_CXX_STANDARD 17)
 
+#Prerequisites
 include(FetchContent)
 FetchContent_Declare(
         BTAS
@@ -14,9 +15,6 @@ FetchContent_GetProperties(BTAS
         BINARY_DIR BTAS_BINARY_DIR
         )
 
-message(STATUS "BTAS: $(BTAS)")
-
-#Prerequisites
 #find_package(Eigen3 REQUIRED)
 find_package(Libint2 REQUIRED)
 
