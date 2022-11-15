@@ -6,3 +6,4 @@
 
 #### Capabilities
 - Restricted Hartree-Fock
+- Unrestricted Hartree-Fock
