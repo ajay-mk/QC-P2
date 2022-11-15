@@ -417,6 +417,13 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
     auto ndocc = nelectron/2;
 
+    // Occupied and Virtual Orbitals
+    auto noo = 2 * (nelectron/2);
+    auto nvo = (2 * nao) - noo;
+    std::cout << std::endl
+              << "Number of occupied orbitals: " << noo << std::endl
+              << "Number of virtual orbitals: " << nvo << std::endl;
+
     // Initializing Libint
     libint2::initialize();
 
@@ -524,6 +531,13 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     std::cout << std::endl
               << "Number of alpha electrons: " << results.nalpha << std::endl
               << "Number of beta electrons: " << results.nbeta << std::endl;
+
+    // Occupied and Virtual Orbitals
+    auto noo = 2 * (nelectron/2);
+    auto nvo = (2 * nao) - noo;
+    std::cout << std::endl
+              << "Number of occupied orbitals: " << noo << std::endl
+              << "Number of virtual orbitals: " << nvo << std::endl;
 
     std::cout << std::endl
               << "Starting UHF calculation" << std::endl;
