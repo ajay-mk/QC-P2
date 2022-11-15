@@ -32,8 +32,8 @@ params read_config(const std::string& config_file){
     params config;
     // Expected Format of Config File
     // Method
-    // Multiplicity
     // Basis Set
+    // Multiplicity
     // SCF Max. Iter.
     // SCF Conv
     std::ifstream input (config_file);
