@@ -2,7 +2,7 @@
 // Created by Ajay Melekamburath on 11/14/22.
 //
 // Some general functions
-#include <cmath>
+
 #include <iostream>
 #include <vector>
 
