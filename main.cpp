@@ -77,12 +77,15 @@ int main(int argc, char *argv[]) {
          << "Number of basis functions = " << nao << endl;
 
     // Main
-    if(config.type == "RHF")
+    if(config.type == "RHF" || config.type == "rhf")
         auto hf_results = RHF(atoms, obs, nao, nelectron, config);
-    if(config.type == "UHF")
+    else if(config.type == "UHF" || config.type == "uhf")
         auto uhf_results = UHF(atoms, obs, nao, nelectron, config);
-    if(config.type == "MP2")
+    else if(config.type == "MP2" || config.type == "mp2")
         ;
-
+    else{
+        cout << endl
+             << config.type << " is not a supported method" << endl;
+    }
 }
 
