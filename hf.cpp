@@ -52,6 +52,8 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells, libint2::Op
 Matrix density_guess(int nocc, int nao);
 Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
 Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds);
+real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F);
+real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta);
 
 
 // Function Definitions
@@ -410,8 +412,8 @@ Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells,
 
                                     const auto value_scal_by_deg = value * s1234_deg;
 
-                                    G(bf1, bf2) += D(bf3, bf4) * value_scal_by_deg;
-                                    G(bf3, bf4) += D(bf1, bf2) * value_scal_by_deg;
+                                    G(bf1, bf2) += 0.5 * D(bf3, bf4) * value_scal_by_deg;
+                                    G(bf3, bf4) += 0.5 * D(bf1, bf2) * value_scal_by_deg;
                                     G(bf1, bf3) -= 0.25 * Ds(bf2, bf4) * value_scal_by_deg;
                                     G(bf2, bf4) -= 0.25 * Ds(bf1, bf3) * value_scal_by_deg;
                                     G(bf1, bf4) -= 0.25 * Ds(bf2, bf3) * value_scal_by_deg;
@@ -430,6 +432,25 @@ Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells,
     return 0.5 * (G + Gt);
 }
 
+
+real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F)
+{
+    real_t energy = 0.0;
+    for (auto i = 0; i < D.rows(); i++)
+        for (auto j = 0; j < D.rows(); j++)
+            energy += D(i, j) * (H(i, j) + F(i, j));
+    return energy;
+}
+
+real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta)
+{
+    real_t energy = 0.0;
+    for (auto i = 0; i < D.rows(); i++)
+        for (auto j = 0; j < D.rows(); j++)
+            energy += D(i, j) * H(i, j) + Dalpha(i, j) * Falpha(i, j) + Dbeta(i, j) * Fbeta(i, j);
+    return 0.5 * energy;
+
+}
 
 rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
 {
@@ -488,7 +509,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     auto iter = 0;
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
-    real_t ehf = 0.0;
+    real_t ehf;
     do {
         ++iter;
 
@@ -516,10 +537,7 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         D = C_occ * C_occ.transpose();
 
         // compute HF energy
-        ehf = 0.0;
-        for (auto i = 0; i < nao; i++)
-            for (auto j = 0; j < nao; j++)
-                ehf += D(i, j) * (H(i, j) + F(i, j));
+        ehf = rhf_energy(D, H, F);
 
         // compute difference with last iteration
         ediff = ehf - ehf_last;
@@ -545,14 +563,14 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
     uhf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1)/2;
-    results.nalpha = results.nbeta + (config.multiplicity - 1);
+    results.nalpha = results.nbeta + config.multiplicity - 1;
 
     std::cout << std::endl
               << "Number of alpha electrons: " << results.nalpha << std::endl
               << "Number of beta electrons: " << results.nbeta << std::endl;
 
     std::cout << std::endl
-              << "Starting RHF calculation" << std::endl;
+              << "Starting UHF calculation" << std::endl;
     auto enuc = compute_enuc(atoms);
     //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
 
@@ -588,11 +606,12 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     Matrix Dbeta = density_guess(results.nbeta, nao);
     Matrix D = Dalpha + Dbeta; // Total Density Matrix
 
+
     // SCF Loop
     auto iter = 0;
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
-    real_t euhf = 0.0;
+    real_t euhf;
     do{
         ++iter;
 
@@ -624,10 +643,7 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         D = Dalpha + Dbeta;
 
         // UHF Energy
-        euhf = 0.0;
-        for (auto i = 0; i < nao; i++)
-            for (auto j = 0; j < nao; j++)
-                euhf += D(i, j) * H(i, j) + Dalpha(i, j) * Falpha(i, j) + Dbeta(i, j) * Fbeta(i, j);
+        euhf = uhf_energy(D, Dalpha, Dbeta, H, Falpha, Fbeta);
 
         // compute difference with last iteration
         ediff = euhf - euhf_last;
@@ -636,7 +652,7 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
-        results.energy = euhf + enuc;
+        results.energy =  euhf + enuc;
         results.Fa = Falpha, results.Fb = Fbeta;
         results.Ca = C_alpha, results.Cb = C_beta;
 
