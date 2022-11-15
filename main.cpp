@@ -81,5 +81,8 @@ int main(int argc, char *argv[]) {
         auto hf_results = RHF(atoms, obs, nao, nelectron, config);
     if(config.type == "UHF")
         auto uhf_results = UHF(atoms, obs, nao, nelectron, config);
+    if(config.type == "MP2")
+        ;
+
 }
 
