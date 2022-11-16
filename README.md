@@ -7,3 +7,4 @@
 #### Features
 - Restricted Hartree-Fock
 - Unrestricted Hartree-Fock
+- Møller–Plesset Perturbation Theory (MP2) (Under development)
