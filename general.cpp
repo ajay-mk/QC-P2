@@ -29,7 +29,8 @@ struct params {
 // Function Definitions
 ///TODO: Dictionary type construct for config
 params read_config(const std::string& config_file){
-    std::cout << "Reading configurations from " << config_file << std::endl;
+    std::cout << std::endl
+              << "Reading configurations from " << config_file << std::endl;
     params config;
     // Expected Format of Config File
     // Input Geometry
@@ -53,7 +54,8 @@ params read_config(const std::string& config_file){
 
 // Reading Geometry from input file
 std::vector<libint2::Atom> read_geometry(const std::string& filename) {
-    std::cout << "Reading geometry from " << filename << std::endl;
+    std::cout <<
+            std::endl << "Reading geometry from " << filename << std::endl;
     std::ifstream is(filename);
     assert(is.good());
 
