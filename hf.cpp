@@ -40,6 +40,7 @@ struct scf_results{
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
 Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
 double compute_enuc(const std::vector<libint2::Atom> &atoms);
+size_t nbasis(const std::vector<libint2::Shell>& shells);
 
 Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells, libint2::Operator t, const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
 
@@ -48,7 +49,7 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
 Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds);
 real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F);
 real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta);
-Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D);
+//Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D);
 
 // Function Definitions
 
@@ -623,88 +624,88 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 // Trying out new fock builder
-Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D){
-    using libint2::Engine;
-    using libint2::Operator;
-    using libint2::Shell;
-
-    // Count number of basis functions
-    const auto n = nbasis(obs.shells());
-    Matrix G = Matrix::Zero(n, n); // Matrix for Fock Matrix
-
-    // Construct integral engine --> Repulsion Integrals
-    Engine engine(Operator::coulomb, obs.max_nprim(), obs.max_l(), 0); // 0 means no derivatives are calculated
-
-    // Map Shells to BasisFunctions
-    auto shell2bf = map_shell_to_basis_function(obs.shells());
-
-    // Define Buffer value
-    const auto& buf = engine.results();
-
-    // Now we need to loop over permuatationally different combinations --> Using the symmetry of 2-e integrals
-    // In chemist's notation (a,b --> electron 1, c,d --> electron 2)
-    // (12|34) = (21|34) = (12|43) = (34|12) = (43|12) = (34|21) = (43|21)
-
-    // Starting for loops
-    for(auto s1 = 0; s1 != obs.shells().size(); ++s1){
-        auto bf1_first = shell2bf[s1]; // First basis function to this shell
-        auto n1 = obs.shells()[s1].size(); // Number of basis functions in this shell
-
-        for (auto s2 = 0; s2 <= s1; ++s2){
-            auto bf2_first = shell2bf[s2];
-            auto n2 = obs.shells()[s2].size();
-
-            for (auto s3 = 0; s3 <= s1; ++s3){
-                auto bf3_first = shell2bf[s3];
-                auto n3 = obs.shells()[s3].size();
-
-                const auto s4_max = (s1 == s3) ? s2 : s3;
-                for (auto s4 = 0; s4 <= s4_max; ++s4){
-                    auto bf4_first = shell2bf[s4];
-                    auto n4= obs.shells()[s4].size();
-
-                    // Computing permutational degeneracy of this set
-                    auto s12_d = (s1 == s2) ? 1.0 : 2.0;
-                    auto s34_d = (s3 == s4) ? 1.0 : 2.0;
-                    auto s12_34_d = (s12_d == s34_d) ? 1.0 : 2.0;
-                    auto s1234_d = s12_d * s34_d * s12_34_d;
-
-                    engine.compute(obs.shells()[s1], obs.shells()[s2], obs.shells()[s3], obs.shells()[s4]);
-                    const auto *buf_1234 = buf[0];
-                    if (buf_1234 == nullptr)
-                        continue ; // if all integrals screened out, skip to next quartet (Need to figure out what's happening here)
-
-                    for (auto f1 = 0, f1234 = 0; f1 != n1; ++f1) {
-                        const auto bf1 = f1 + bf1_first;
-                        for (auto f2 = 0; f2 != n2; ++f2) {
-                            const auto bf2 = f2 + bf2_first;
-                            for (auto f3 = 0; f3 != n3; ++f3) {
-                                const auto bf3 = f3 + bf3_first;
-                                for (auto f4 = 0; f4 != n4; ++f4, ++f1234){
-                                    const auto bf4 = f4 + bf4_first;
-
-                                    const auto value = buf_1234[f1234];
-
-                                    const auto value_scaling_by_deg = value * s1234_d;
-
-                                    G(bf1, bf2) += D(bf3, bf4) * value_scaling_by_deg;
-                                    G(bf3, bf4) += D(bf1, bf2) * value_scaling_by_deg;
-                                    G(bf1, bf3) -= 0.25 * D(bf2, bf4) * value_scaling_by_deg;
-                                    G(bf2, bf4) -= 0.25 * D(bf1, bf3) * value_scaling_by_deg;
-                                    G(bf1, bf4) -= 0.25 * D(bf2, bf3) * value_scaling_by_deg;
-                                    G(bf2, bf3) -= 0.25 * D(bf1, bf4) * value_scaling_by_deg;
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-
-    }
-    Matrix Gt = G.transpose();
-    return 0.5 * (G + Gt);
-}
+//Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D){
+//    using libint2::Engine;
+//    using libint2::Operator;
+//    using libint2::Shell;
+//
+//    // Count number of basis functions
+//    const auto n = nbasis(obs.shells());
+//    Matrix G = Matrix::Zero(n, n); // Matrix for Fock Matrix
+//
+//    // Construct integral engine --> Repulsion Integrals
+//    Engine engine(Operator::coulomb, obs.max_nprim(), obs.max_l(), 0); // 0 means no derivatives are calculated
+//
+//    // Map Shells to BasisFunctions
+//    auto shell2bf = map_shell_to_basis_function(obs.shells());
+//
+//    // Define Buffer value
+//    const auto& buf = engine.results();
+//
+//    // Now we need to loop over permuatationally different combinations --> Using the symmetry of 2-e integrals
+//    // In chemist's notation (a,b --> electron 1, c,d --> electron 2)
+//    // (12|34) = (21|34) = (12|43) = (34|12) = (43|12) = (34|21) = (43|21)
+//
+//    // Starting for loops
+//    for(auto s1 = 0; s1 != obs.shells().size(); ++s1){
+//        auto bf1_first = shell2bf[s1]; // First basis function to this shell
+//        auto n1 = obs.shells()[s1].size(); // Number of basis functions in this shell
+//
+//        for (auto s2 = 0; s2 <= s1; ++s2){
+//            auto bf2_first = shell2bf[s2];
+//            auto n2 = obs.shells()[s2].size();
+//
+//            for (auto s3 = 0; s3 <= s1; ++s3){
+//                auto bf3_first = shell2bf[s3];
+//                auto n3 = obs.shells()[s3].size();
+//
+//                const auto s4_max = (s1 == s3) ? s2 : s3;
+//                for (auto s4 = 0; s4 <= s4_max; ++s4){
+//                    auto bf4_first = shell2bf[s4];
+//                    auto n4= obs.shells()[s4].size();
+//
+//                    // Computing permutational degeneracy of this set
+//                    auto s12_d = (s1 == s2) ? 1.0 : 2.0;
+//                    auto s34_d = (s3 == s4) ? 1.0 : 2.0;
+//                    auto s12_34_d = (s12_d == s34_d) ? 1.0 : 2.0;
+//                    auto s1234_d = s12_d * s34_d * s12_34_d;
+//
+//                    engine.compute(obs.shells()[s1], obs.shells()[s2], obs.shells()[s3], obs.shells()[s4]);
+//                    const auto *buf_1234 = buf[0];
+//                    if (buf_1234 == nullptr)
+//                        continue ; // if all integrals screened out, skip to next quartet (Need to figure out what's happening here)
+//
+//                    for (auto f1 = 0, f1234 = 0; f1 != n1; ++f1) {
+//                        const auto bf1 = f1 + bf1_first;
+//                        for (auto f2 = 0; f2 != n2; ++f2) {
+//                            const auto bf2 = f2 + bf2_first;
+//                            for (auto f3 = 0; f3 != n3; ++f3) {
+//                                const auto bf3 = f3 + bf3_first;
+//                                for (auto f4 = 0; f4 != n4; ++f4, ++f1234){
+//                                    const auto bf4 = f4 + bf4_first;
+//
+//                                    const auto value = buf_1234[f1234];
+//
+//                                    const auto value_scaling_by_deg = value * s1234_d;
+//
+//                                    G(bf1, bf2) += D(bf3, bf4) * value_scaling_by_deg;
+//                                    G(bf3, bf4) += D(bf1, bf2) * value_scaling_by_deg;
+//                                    G(bf1, bf3) -= 0.25 * D(bf2, bf4) * value_scaling_by_deg;
+//                                    G(bf2, bf4) -= 0.25 * D(bf1, bf3) * value_scaling_by_deg;
+//                                    G(bf1, bf4) -= 0.25 * D(bf2, bf3) * value_scaling_by_deg;
+//                                    G(bf2, bf3) -= 0.25 * D(bf1, bf4) * value_scaling_by_deg;
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//                }
+//            }
+//        }
+//
+//    }
+//    Matrix Gt = G.transpose();
+//    return 0.5 * (G + Gt);
+//}
 
 // EOF
