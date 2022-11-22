@@ -20,6 +20,7 @@
 //TypeDefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
+typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
 
 // Structs
 struct params {
@@ -35,6 +36,7 @@ struct scf_results{
     real_t energy;
     int nalpha, nbeta, noo, nvo;
     Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
+Vector moes, moes_a, moes_b;
 };
 
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
@@ -137,9 +139,7 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells, libint2::Op
 
         }
     }
-
     return result;
-
 }
 
 
@@ -466,9 +466,8 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
     real_t ehf;
-    do {
-        ++iter;
 
+    for (auto iter = 0; iter < config.maxiter; iter++){
         // Save a copy of the energy and the density
         auto ehf_last = ehf;
         auto D_last = D;
@@ -478,10 +477,10 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         //F += compute_2body_fock_simple(shells, D);
         F += build_fock(obs.shells(), D);
 
-//        if (iter == 1) {
-//            std::cout << "\nFock Matrix:\n";
-//            std::cout << F << std::endl;
-//        }
+        //        if (iter == 1) {
+        //            std::cout << "\nFock Matrix:\n";
+        //            std::cout << F << std::endl;
+        //        }
 
         // solve F C = e S C
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> gen_eig_solver(F, S);
@@ -503,12 +502,21 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
-        results.energy = ehf + enuc;
 
-    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+            results.energy = ehf + enuc;
+            results.D = D;
+            results.F = F;
+            results.C = C;
+            results.moes = eps;
+            break;
+        }
+        else
+            continue ;
 
+    }
     std::cout << std::endl
-         << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
+              << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
     libint2::finalize();// done with libint
     return results;
@@ -573,9 +581,8 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
     real_t euhf;
-    do{
-        ++iter;
 
+    for (auto iter = 0; iter < config.maxiter; iter++){
         // Save copy of energy and density
         auto euhf_last = euhf;
         auto D_last = D;
@@ -613,11 +620,22 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
-        results.energy =  euhf + enuc;
-//        results.Fa = Falpha, results.Fb = Fbeta;
-//        results.Ca = C_alpha, results.Cb = C_beta;
 
-    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+            results.energy = euhf + enuc;
+            results.D = D;
+            results.Fa = Falpha;
+            results.Fb = Fbeta;
+            results.Ca = C_alpha;
+            results.Cb = C_beta;
+            results.moes_a = eps_alpha;
+            results.moes_b = eps_beta;
+            break;
+        }
+        else
+            continue ;
+
+    }
     std::cout << std::endl
               << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
