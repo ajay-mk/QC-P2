@@ -13,21 +13,43 @@
 
 //TypeDefs
 using real_t = libint2::scalar_type;
-typedef btas::Tensor<double> Tensor;
+typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
+typedef btas::Tensor<double> DTensor;
+typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
+DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& C);
+real_t mp2_energy(DTensor ia_jb, Vector eps);
+
+//Structs
+struct mp2_results{
+    real_t energy;
+    DTensor T;
+};
+
+struct scf_results{
+    real_t energy;
+    int nalpha, nbeta, noo, nvo;
+    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
+    Vector moes, moes_a, moes_b;
+};
 
 // Functions
-Tensor eri_ao_tensor(const libint2::BasisSet& obs);
+DTensor eri_ao_tensor(const libint2::BasisSet& obs);
 size_t nbasis(const std::vector<libint2::Shell>& shells);
+DTensor transform_ao_mo(const DTensor& ao_ints, const Matrix& C, const int& nocc, const int& nuocc);
+
+DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc);
+real_t mp2_energy();
 
 // Function Definitions
 
-Tensor eri_ao_tensor(const libint2::BasisSet& obs) {
+DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
     using libint2::Shell;
     using libint2::Engine;
     using libint2::Operator;
 
     const auto n = nbasis(obs.shells());
-    Tensor ao_ints(n, n, n, n);
+    DTensor ao_ints(n, n, n, n);
+    ao_ints.fill(0.0);
 
     libint2::initialize();
 
@@ -100,4 +122,87 @@ Tensor eri_ao_tensor(const libint2::BasisSet& obs) {
     return ao_ints;
 }
 
+// AO to MO transformation function : (pq|rs) --> (ia|jb) in Chemist's notation
+// <pr|qs> --> (ij|ab) in Dirac notation
+DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& C){
+    using btas::contract;
+    DTensor ia_jb;
+    const int n = pq_rs.extent(0);
+
+    DTensor C0(n,n);
+    for (auto a = 0; a < n; a++){
+        for (auto b = 0; b < n; b++){
+            C0(a, b) = C(a, b);
+        }
+    }
+    // Tensor Contractions
+    DTensor pq_rl(n, n, n, n), pq_kl(n, n, n, n), pj_kl(n, n, n, n), ij_kl(n, n, n, n);
+    enum {p, q, r, s, i, j, k, l};
+    // sum{s} C_{s}^{b} (pq|rs)
+    contract(1.0, pq_rs, {p, q, r, s}, C0, {s, l}, 1.0, pq_rl, {p, q, r, l});
+    // sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))
+    contract(1.0, pq_rl, {p, q, r, l}, C0, {r, k}, 1.0, pq_kl, {p, q, k, l});
+    // sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs)))
+    contract(1.0, pq_kl, {p, q, k, l}, C0, {q, j}, 1.0, pj_kl, {p, j, k, l});
+    // sum{p} C_{p}^{i} (sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))))
+    contract(1.0, pj_kl, {p, j, k, l}, C0, {p, i}, 1.0, ij_kl, {i, j, k, l});
+
+    //don't need other three tensors anymore
+    pq_kl(0,0,0,0), pj_kl(0,0,0,0), pq_rl(0,0,0,0);
+    return ij_kl;
+}
+
+DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc)
+{
+    DTensor ia_jb(nocc, nuocc, nocc, nuocc);
+    auto n = ij_kl.extent(0);
+    for (auto i = 0; i < nocc; i++){
+        for (auto a = 0; a < nuocc; a++){
+            for (auto j = 0; j < nocc; j++){
+                for (auto b = 0; b < nuocc; b++){
+                    ia_jb(i,a,j,b) = ij_kl(i,nocc+a,j,nocc+b);
+                }
+            }
+        }
+    }
+    return ia_jb;
+}
+
+// Calculates MP2 Energy
+real_t mp2_energy(DTensor ia_jb, Vector eps){
+    real_t energy;
+    auto nocc = ia_jb.extent(0);
+    auto nuocc = ia_jb.extent(1);
+    energy = 0.0;
+    for (auto i = 0; i < nocc; i++){
+        for (auto a = 0; a < nuocc; a++){
+            for (auto j = 0; j < nocc; j++){
+                for (auto b = 0; b < nuocc; b++){
+                    energy += ia_jb(i, a, j, b) *
+                              (2 * ia_jb(i, a, j, b) - ia_jb(i, b, j, a))/
+                              (eps[i] + eps[j] - eps[nocc + a] - eps[nocc + b]);
+                }
+            }
+        }
+    }
+    return energy;
+}
+
+// Main MP2 Function
+mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf)
+{
+    mp2_results results;
+    std::cout << std::endl
+              <<"Starting MP2 calculation" << std::endl
+              << std::endl;
+    // Calculating AO Integrals
+    auto ao_ints = eri_ao_tensor(obs);
+    // Transform AO to MO basis
+    auto mo_ints = transform_ao_mo(ao_ints, scf.C);
+    auto ia_jb = get_iajb(mo_ints, scf.noo/2, scf.nvo/2);
+    results.energy = mp2_energy(ia_jb, scf.moes);
+    results.T = ia_jb;
+    std::cout << "MP2 Energy: " << results.energy << " Eh" << std::endl;
+    return results;
+}
 // EOF
