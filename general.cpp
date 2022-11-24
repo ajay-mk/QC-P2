@@ -2,7 +2,7 @@
 // Created by Ajay Melekamburath on 11/14/22.
 //
 // Some general functions
-#include <cmath>
+
 #include <iostream>
 #include <vector>
 
@@ -18,6 +18,7 @@ using real_t = libint2::scalar_type;
 
 // Structs
 struct params {
+    std::string inputfile;
     std::string type;
     std::string basis;
     double multiplicity;
@@ -26,18 +27,21 @@ struct params {
 };
 
 // Function Definitions
-
+///TODO: Dictionary type construct for config
 params read_config(const std::string& config_file){
-    std::cout << "Reading configurations from " << config_file << std::endl;
+    std::cout << std::endl
+              << "Reading configurations from " << config_file << std::endl;
     params config;
     // Expected Format of Config File
+    // Input Geometry
     // Method
-    // Multiplicity
     // Basis Set
+    // Multiplicity
     // SCF Max. Iter.
     // SCF Conv
     std::ifstream input (config_file);
     if (input.is_open()){
+        input >> config.inputfile;
         input >> config.type;
         input >> config.basis;
         input >> config.multiplicity;
@@ -50,7 +54,8 @@ params read_config(const std::string& config_file){
 
 // Reading Geometry from input file
 std::vector<libint2::Atom> read_geometry(const std::string& filename) {
-    std::cout << "Reading geometry from " << filename << std::endl;
+    std::cout <<
+            std::endl << "Reading geometry from " << filename << std::endl;
     std::ifstream is(filename);
     assert(is.good());
 
@@ -70,3 +75,6 @@ void print_geometry(const std::vector<libint2::Atom>& atoms){
     }
     std::cout << std::endl;
 }
+
+
+// EOF

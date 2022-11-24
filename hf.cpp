@@ -20,9 +20,11 @@
 //TypeDefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
+typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
 
 // Structs
 struct params {
+    std::string inputfile;
     std::string type;
     std::string basis;
     double multiplicity;
@@ -30,22 +32,17 @@ struct params {
     real_t conv;
 };
 
-struct rhf_results {
-    double energy;
-    Matrix F;
-    Matrix C;
-};
-
-struct uhf_results {
-    double energy;
-    int nalpha, nbeta;
-    Matrix Fa, Fb;
-    Matrix Ca, Cb;
+struct scf_results{
+    real_t energy;
+    int nalpha, nbeta, noo, nvo;
+    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
+Vector moes, moes_a, moes_b;
 };
 
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
 Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
 double compute_enuc(const std::vector<libint2::Atom> &atoms);
+size_t nbasis(const std::vector<libint2::Shell>& shells);
 
 Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells, libint2::Operator t, const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
 
@@ -54,7 +51,7 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
 Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds);
 real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F);
 real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta);
-
+//Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D);
 
 // Function Definitions
 
@@ -142,9 +139,7 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells, libint2::Op
 
         }
     }
-
     return result;
-
 }
 
 
@@ -184,8 +179,7 @@ Matrix density_guess(int nocc, int nao)
 }
 
 // Fock Builder
-Matrix build_fock(const std::vector<libint2::Shell> &shells,
-                          const Matrix &D) {
+Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D) {
 
     using libint2::Engine;
     using libint2::Operator;
@@ -304,8 +298,7 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells,
     return 0.5 * (G + Gt);
 }
 
-Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells,
-                  const Matrix &D, const Matrix &Ds) {
+Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds) {
 
     using libint2::Engine;
     using libint2::Operator;
@@ -407,15 +400,22 @@ real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , co
     return 0.5 * energy;
 
 }
-
-rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
+///TODO: Change RHF and UHF functions to directly deal with results.variables
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
 {
     std::cout << std::endl
               << "Starting RHF calculation" << std::endl;
-    rhf_results results;
+    scf_results results;
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
     auto ndocc = nelectron/2;
+
+    // Occupied and Virtual Orbitals
+    results.noo = 2 * (nelectron/2);
+    results.nvo = (2 * nao) - results.noo;
+    std::cout << std::endl
+              << "Number of occupied orbitals: " << results.noo << std::endl
+              << "Number of virtual orbitals: " << results.nvo << std::endl;
 
     // Initializing Libint
     libint2::initialize();
@@ -466,9 +466,8 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
     real_t ehf;
-    do {
-        ++iter;
 
+    for (auto iter = 1; iter < config.maxiter; iter++){
         // Save a copy of the energy and the density
         auto ehf_last = ehf;
         auto D_last = D;
@@ -478,10 +477,10 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         //F += compute_2body_fock_simple(shells, D);
         F += build_fock(obs.shells(), D);
 
-//        if (iter == 1) {
-//            std::cout << "\nFock Matrix:\n";
-//            std::cout << F << std::endl;
-//        }
+        //        if (iter == 1) {
+        //            std::cout << "\nFock Matrix:\n";
+        //            std::cout << F << std::endl;
+        //        }
 
         // solve F C = e S C
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> gen_eig_solver(F, S);
@@ -503,27 +502,41 @@ rhf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
-        results.F = F;
-        results.C = C;
-        results.energy = ehf + enuc;
 
-    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+            results.energy = ehf + enuc;
+            results.D = D;
+            results.F = F;
+            results.C = C;
+            results.moes = eps;
+            break;
+        }
+        else
+            continue ;
 
+    }
     std::cout << std::endl
-         << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
+              << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
     libint2::finalize();// done with libint
     return results;
 }
-
-uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
-    uhf_results results;
+///TODO: Change RHF and UHF functions to directly deal with results.variables
+scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
+    scf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1)/2;
     results.nalpha = results.nbeta + config.multiplicity - 1;
 
     std::cout << std::endl
               << "Number of alpha electrons: " << results.nalpha << std::endl
               << "Number of beta electrons: " << results.nbeta << std::endl;
+
+    // Occupied and Virtual Orbitals
+    results.noo = 2 * (nelectron/2);
+    results.nvo = (2 * nao) - results.noo;
+    std::cout << std::endl
+              << "Number of occupied orbitals: " << results.noo << std::endl
+              << "Number of virtual orbitals: " << results.nvo << std::endl;
 
     std::cout << std::endl
               << "Starting UHF calculation" << std::endl;
@@ -568,9 +581,8 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t rmsd = 0.0;
     real_t ediff = 0.0;
     real_t euhf;
-    do{
-        ++iter;
 
+    for (auto iter = 1; iter < config.maxiter; iter++){
         // Save copy of energy and density
         auto euhf_last = euhf;
         auto D_last = D;
@@ -608,13 +620,26 @@ uhf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         if (iter == 1)
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
-        results.energy =  euhf + enuc;
-        results.Fa = Falpha, results.Fb = Fbeta;
-        results.Ca = C_alpha, results.Cb = C_beta;
 
-    } while (((fabs(ediff) > config.conv) || (fabs(rmsd) > config.conv)) && (iter < config.maxiter));
+        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+            results.energy = euhf + enuc;
+            results.D = D;
+            results.Fa = Falpha;
+            results.Fb = Fbeta;
+            results.Ca = C_alpha;
+            results.Cb = C_beta;
+            results.moes_a = eps_alpha;
+            results.moes_b = eps_beta;
+            break;
+        }
+        else
+            continue ;
+
+    }
     std::cout << std::endl
               << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
 
     return results;
 }
+
+// EOF
