@@ -3,4 +3,3 @@ cmake-build-debug
 *xml
 *.iml
 CMakeFiles
-.idea
