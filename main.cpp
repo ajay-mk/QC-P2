@@ -10,22 +10,14 @@
 #include <libint2/statics_definition.h>
 #endif
 #include "btas/btas.h"
+// Include Headers
+#include "general.h"
 
 // Typedefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1, Eigen::RowMajor> Vector;
 typedef btas::Tensor<double> DTensor;
-
-struct params {
-    std::string inputfile;
-    std::string type;
-    std::string scf;
-    std::string basis;
-    double multiplicity;
-    int maxiter;
-    real_t conv;
-};
 
 struct scf_results{
     real_t energy;
@@ -40,9 +32,6 @@ struct mp2_results{
 };
 
 // Functions
-std::vector<libint2::Atom> read_geometry(const std::string &filename);
-void print_geometry(const std::vector<libint2::Atom> &atoms);
-params read_config(const std::string& config_file);
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods

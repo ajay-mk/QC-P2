@@ -16,6 +16,8 @@
 #if !LIBINT2_CONSTEXPR_STATICS
 #  include <libint2/statics_definition.h>
 #endif
+// Include Headers
+#include "general.h"
 
 //TypeDefs
 using real_t = libint2::scalar_type;
@@ -23,16 +25,6 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
 
 // Structs
-struct params {
-    std::string inputfile;
-    std::string type;
-    std::string scf;
-    std::string basis;
-    double multiplicity;
-    int maxiter;
-    real_t conv;
-};
-
 struct scf_results{
     real_t energy;
     int nalpha, nbeta, noo, nvo;
