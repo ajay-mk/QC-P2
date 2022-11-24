@@ -11,22 +11,12 @@
 #endif
 #include "btas/btas.h"
 // Include Headers
-#include "general.h"
-#include "hf.h"
-
-// Typedefs
-typedef btas::Tensor<double> DTensor;
-
-struct mp2_results{
-    real_t energy;
-    DTensor T;
-};
+#include "mp2.h"
 
 // Functions
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods
-mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf);
 int main(int argc, char *argv[]) {
 
     using std::cerr;

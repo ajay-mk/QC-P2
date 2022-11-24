@@ -17,34 +17,24 @@
 #  include <libint2/statics_definition.h>
 #endif
 // Include Headers
-#include "general.h"
 #include "hf.h"
-
-size_t nbasis(const std::vector<libint2::Shell>& shells);
 
 
 // Function Definitions
 
 // Computing Nuclear Repulsion Energy
-double compute_enuc(const std::vector<libint2::Atom>& atoms){
+double compute_enuc(const std::vector<libint2::Atom>& atoms) {
     auto num = 0.0;
     for (auto i = 0; i < atoms.size(); i++)
         for (auto j = i + 1; j < atoms.size(); j++) {
             auto xij = atoms[i].x - atoms[j].x;
             auto yij = atoms[i].y - atoms[j].y;
             auto zij = atoms[i].z - atoms[j].z;
-            auto r2 = xij*xij + yij*yij + zij*zij;
+            auto r2 = xij * xij + yij * yij + zij * zij;
             auto r = sqrt(r2);
             num += atoms[i].atomic_number * atoms[j].atomic_number / r;
         }
     return num;
-}
-// Counting number of basis functions
-size_t nbasis(const std::vector<libint2::Shell>& shells) {
-    size_t n = 0;
-    for (const auto& shell: shells)
-        n += shell.size();
-    return n;
 }
 
 std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell>& shells) {

@@ -58,5 +58,12 @@ void print_geometry(const std::vector<libint2::Atom>& atoms){
     std::cout << std::endl;
 }
 
+// Counting number of basis functions
+size_t nbasis(const std::vector<libint2::Shell>& shells) {
+    size_t n = 0;
+    for (const auto& shell: shells)
+        n += shell.size();
+    return n;
+}
 
 // EOF

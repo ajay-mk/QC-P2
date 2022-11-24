@@ -15,6 +15,8 @@
 #  include <libint2/statics_definition.h>
 #endif
 
+#include "general.h"
+
 //TypeDefs
 using real_t = libint2::scalar_type;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
