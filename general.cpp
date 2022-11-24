@@ -20,6 +20,7 @@ using real_t = libint2::scalar_type;
 struct params {
     std::string inputfile;
     std::string type;
+    std::string scf;
     std::string basis;
     double multiplicity;
     int maxiter;
@@ -43,6 +44,7 @@ params read_config(const std::string& config_file){
     if (input.is_open()){
         input >> config.inputfile;
         input >> config.type;
+        input >> config.scf;
         input >> config.basis;
         input >> config.multiplicity;
         input >> config.maxiter;

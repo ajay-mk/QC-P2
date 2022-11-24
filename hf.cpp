@@ -26,6 +26,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
 struct params {
     std::string inputfile;
     std::string type;
+    std::string scf;
     std::string basis;
     double multiplicity;
     int maxiter;

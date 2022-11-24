@@ -20,6 +20,7 @@ typedef btas::Tensor<double> DTensor;
 struct params {
     std::string inputfile;
     std::string type;
+    std::string scf;
     std::string basis;
     double multiplicity;
     int maxiter;
@@ -84,10 +85,16 @@ int main(int argc, char *argv[]) {
         auto hf_result = RHF(atoms, obs, nao, nelectron, config);
     else if(config.type == "UHF" || config.type == "uhf")
         auto uhf_result = UHF(atoms, obs, nao, nelectron, config);
-    else if(config.type == "MP2" || config.type == "mp2"){
+    else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "RHF" || config.scf == "rhf")){
         auto hf_result = RHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result);
         cout << "MP2 Corrected energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
+    }
+    else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "UHF" || config.scf == "UHF")){
+        cout << "UMP2 Under development" << endl;
+        //auto hf_result = UHF(atoms, obs, nao, nelectron, config);
+        //auto mp2_result = MP2(obs, hf_result);
+        //cout << "MP2 Corrected energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
     }
     else{
         cout << endl
