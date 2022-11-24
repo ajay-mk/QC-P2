@@ -13,10 +13,7 @@
 // Include Headers
 #include "mp2.h"
 
-// Functions
-size_t nbasis(const std::vector<libint2::Shell> &shells);
-
-// Methods
+// Main
 int main(int argc, char *argv[]) {
 
     using std::cerr;
