@@ -467,7 +467,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t ediff = 0.0;
     real_t ehf;
 
-    for (auto iter = 0; iter < config.maxiter; iter++){
+    for (auto iter = 1; iter < config.maxiter; iter++){
         // Save a copy of the energy and the density
         auto ehf_last = ehf;
         auto D_last = D;
@@ -582,7 +582,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t ediff = 0.0;
     real_t euhf;
 
-    for (auto iter = 0; iter < config.maxiter; iter++){
+    for (auto iter = 1; iter < config.maxiter; iter++){
         // Save copy of energy and density
         auto euhf_last = euhf;
         auto D_last = D;
