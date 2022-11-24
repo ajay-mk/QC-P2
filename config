@@ -1,5 +1,5 @@
-input/nh2.xyz
-UHF
+input/water.xyz
+MP2
 STO-3G
 2
 200
