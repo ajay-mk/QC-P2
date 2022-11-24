@@ -18,33 +18,10 @@
 #endif
 // Include Headers
 #include "general.h"
+#include "hf.h"
 
-//TypeDefs
-using real_t = libint2::scalar_type;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
-
-// Structs
-struct scf_results{
-    real_t energy;
-    int nalpha, nbeta, noo, nvo;
-    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
-Vector moes, moes_a, moes_b;
-};
-
-std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell> &shells);
-Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
-double compute_enuc(const std::vector<libint2::Atom> &atoms);
 size_t nbasis(const std::vector<libint2::Shell>& shells);
 
-Matrix compute_1body_ints(const std::vector<libint2::Shell> &shells, libint2::Operator t, const std::vector<libint2::Atom> &atoms = std::vector<libint2::Atom>());
-
-Matrix density_guess(int nocc, int nao);
-Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D);
-Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds);
-real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F);
-real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta);
-//Matrix new_fock(const libint2::BasisSet& obs, const Matrix &D);
 
 // Function Definitions
 

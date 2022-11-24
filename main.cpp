@@ -12,19 +12,10 @@
 #include "btas/btas.h"
 // Include Headers
 #include "general.h"
+#include "hf.h"
 
 // Typedefs
-using real_t = libint2::scalar_type;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1, Eigen::RowMajor> Vector;
 typedef btas::Tensor<double> DTensor;
-
-struct scf_results{
-    real_t energy;
-    int nalpha, nbeta, noo, nvo;
-    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
-    Vector moes, moes_a, moes_b;
-};
 
 struct mp2_results{
     real_t energy;
@@ -35,8 +26,6 @@ struct mp2_results{
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 // Methods
-scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
-scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
 mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf);
 int main(int argc, char *argv[]) {
 

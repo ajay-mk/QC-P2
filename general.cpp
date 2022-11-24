@@ -4,28 +4,8 @@
 // Some general functions
 
 #include <iostream>
-#include <vector>
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#if !LIBINT2_CONSTEXPR_STATICS
-#include <libint2/statics_definition.h>
-#endif
-
-// Typedefs
-using real_t = libint2::scalar_type;
-
-
-// Structs
-struct params {
-    std::string inputfile;
-    std::string type;
-    std::string scf;
-    std::string basis;
-    double multiplicity;
-    int maxiter;
-    real_t conv;
-};
+#include "general.h"
 
 // Function Definitions
 ///TODO: Dictionary type construct for config
