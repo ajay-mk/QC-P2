@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
     auto nao = nbasis(obs.shells());
     cout << endl
          << "Method: " << config.type << endl
+         << "SCF: " << config.scf << endl
          << "Basis Set: " << config.basis << endl
          << "Number of basis functions = " << nao << endl;
 
