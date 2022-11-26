@@ -2,6 +2,9 @@
 // Created by Ajay Melekamburath on 11/24/22.
 //
 
+#ifndef P2_MP2_H
+#define P2_MP2_H
+
 #include "hf.h"
 
 //TypeDefs
@@ -21,3 +24,8 @@ DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc);
 real_t mp2_energy(DTensor ia_jb, Vector eps);
 
 mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf);
+
+
+#endif//P2_MP2_H
+
+// EOF

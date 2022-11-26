@@ -1,6 +1,9 @@
 //
 // Created by Ajay Melekamburath on 11/24/22.
 //
+#ifndef P2_HF_H
+#define P2_HF_H
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,3 +47,7 @@ real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , co
 
 scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
 scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config);
+
+#endif//P2_HF_H
+
+// EOF

@@ -11,6 +11,8 @@
 #endif
 #include "btas/btas.h"
 // Include Headers
+#include "general.h"
+#include "hf.h"
 #include "mp2.h"
 
 // Main

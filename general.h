@@ -1,6 +1,10 @@
 //
 // Created by Ajay Melekamburath on 11/24/22.
 //
+
+#ifndef P2_GENERAL_H
+#define P2_GENERAL_H
+
 // Some general functions
 
 #include <iostream>
@@ -31,3 +35,7 @@ std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
 params read_config(const std::string& config_file);
 size_t nbasis(const std::vector<libint2::Shell>& shells);
+
+#endif//P2_GENERAL_H
+
+// EOF
