@@ -11,34 +11,7 @@
 #endif
 #include "btas/btas.h"
 
-//TypeDefs
-using real_t = libint2::scalar_type;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
-typedef btas::Tensor<double> DTensor;
-typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
-DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& C);
-real_t mp2_energy(DTensor ia_jb, Vector eps);
-
-//Structs
-struct mp2_results{
-    real_t energy;
-    DTensor T;
-};
-
-struct scf_results{
-    real_t energy;
-    int nalpha, nbeta, noo, nvo;
-    Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
-    Vector moes, moes_a, moes_b;
-};
-
-// Functions
-DTensor eri_ao_tensor(const libint2::BasisSet& obs);
-size_t nbasis(const std::vector<libint2::Shell>& shells);
-DTensor transform_ao_mo(const DTensor& ao_ints, const Matrix& C, const int& nocc, const int& nuocc);
-
-DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc);
-real_t mp2_energy();
+#include "mp2.h"
 
 // Function Definitions
 

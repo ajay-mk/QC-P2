@@ -4,27 +4,8 @@
 // Some general functions
 
 #include <iostream>
-#include <vector>
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#if !LIBINT2_CONSTEXPR_STATICS
-#include <libint2/statics_definition.h>
-#endif
-
-// Typedefs
-using real_t = libint2::scalar_type;
-
-
-// Structs
-struct params {
-    std::string inputfile;
-    std::string type;
-    std::string basis;
-    double multiplicity;
-    int maxiter;
-    real_t conv;
-};
+#include "general.h"
 
 // Function Definitions
 ///TODO: Dictionary type construct for config
@@ -43,6 +24,7 @@ params read_config(const std::string& config_file){
     if (input.is_open()){
         input >> config.inputfile;
         input >> config.type;
+        input >> config.scf;
         input >> config.basis;
         input >> config.multiplicity;
         input >> config.maxiter;
@@ -68,7 +50,7 @@ std::vector<libint2::Atom> read_geometry(const std::string& filename) {
 // Printing Coordinates
 void print_geometry(const std::vector<libint2::Atom>& atoms){
     std::cout << std::endl
-              << "Molecular Geometry" << std::endl;
+              << "Geometry: " << std::endl;
     for (auto i =0; i < atoms.size(); i++){
         std::cout << atoms[i].atomic_number << " " << atoms[i].x << " " << atoms[i].y << " " << atoms[i].z
                   <<std::endl;
@@ -76,5 +58,12 @@ void print_geometry(const std::vector<libint2::Atom>& atoms){
     std::cout << std::endl;
 }
 
+// Counting number of basis functions
+size_t nbasis(const std::vector<libint2::Shell>& shells) {
+    size_t n = 0;
+    for (const auto& shell: shells)
+        n += shell.size();
+    return n;
+}
 
 // EOF
