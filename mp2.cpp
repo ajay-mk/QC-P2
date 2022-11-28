@@ -141,7 +141,7 @@ DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc)
     return ia_jb;
 }
 
-// Calculates MP2 Energy
+// Calculates MP2 Energy - MO Basis
 real_t mp2_energy(DTensor ia_jb, Vector eps){
     real_t energy;
     auto nocc = ia_jb.extent(0);
