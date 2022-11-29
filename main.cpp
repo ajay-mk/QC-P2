@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
         auto uhf_result = UHF(atoms, obs, nao, nelectron, config);
     else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "RHF" || config.scf == "rhf")){
         auto hf_result = RHF(atoms, obs, nao, nelectron, config);
-        auto mp2_result = MP2(obs, hf_result);
+        auto mp2_result = MP2(obs, hf_result, config);
         cout << "MP2 Corrected energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
     }
     else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "UHF" || config.scf == "UHF")){

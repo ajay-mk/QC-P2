@@ -221,22 +221,32 @@ real_t mp2_energy(DTensor ij_ab, Vector eps_so){
 
 
 // Main MP2 Function
-mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf)
+mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf, const params& config)
 {
     mp2_results results;
     std::cout << std::endl
               <<"Starting MP2 calculation" << std::endl
               << std::endl;
-    // Calculating AO Integrals
-    auto ao_ints = eri_ao_tensor(obs);
-    // Transform AO to MO basis
-    auto mo_ints = transform_ao_mo(ao_ints, scf.C);
-    auto so_ints = transform_to_so(mo_ints);
-    auto moes = make_so_moes(scf.moes);
-    auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
-    results.energy = mp2_energy(ij_ab, moes);
+    if (config.scf == "RHF" || config.scf == "rhf") {
+        // Calculating AO Integrals
+        auto ao_ints = eri_ao_tensor(obs);
+        // Transform AO to spatial MO basis
+        auto mo_ints = transform_ao_mo(ao_ints, scf.C);
+        // Transform to spin MO basis
+        auto so_ints = transform_to_so(mo_ints);
+        auto moes = make_so_moes(scf.moes);
+        auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
+        results.energy = mp2_energy(ij_ab, moes);
+        //results.T = ia_jb;
+    }
+    else if (config.scf == "UHF" || config.scf == "uhf"){
+        // Here there will be different coeff matrices coming in
+        // aa, bb, ab matrices
+        // so three ao --> mo transformations
+        // put all of them together to so_ints tensor
+        ;
 
-    //results.T = ia_jb;
+    }
     std::cout << "MP2 Energy: " << results.energy << " Eh" << std::endl;
     return results;
 }

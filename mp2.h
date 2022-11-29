@@ -28,7 +28,7 @@ real_t mp2_energy(DTensor ij_ab, Vector eps_so);
 //DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc);
 //real_t mp2_energy(DTensor ia_jb, Vector eps);
 
-mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf);
+mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf, const params& config);
 
 
 #endif//P2_MP2_H
