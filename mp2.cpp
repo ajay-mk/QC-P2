@@ -125,41 +125,100 @@ DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& C){
     return ij_kl;
 }
 
-DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc)
-{
-    DTensor ia_jb(nocc, nuocc, nocc, nuocc);
-    auto n = ij_kl.extent(0);
-    for (auto i = 0; i < nocc; i++){
-        for (auto a = 0; a < nuocc; a++){
-            for (auto j = 0; j < nocc; j++){
-                for (auto b = 0; b < nuocc; b++){
-                    ia_jb(i,a,j,b) = ij_kl(i,nocc+a,j,nocc+b);
+DTensor transform_to_so(const DTensor& mo_ints){
+    auto n = mo_ints.extent(0) * 2;
+    DTensor so_ints(n, n, n, n);
+    for (auto i = 0; i < n; i++){
+        for (auto j = 0; j < n; j++){
+            for (auto k = 0; k < n; k++){
+                for (auto l = 0; l < n; l++){
+                    so_ints(i, j, k, l) = mo_ints(i/2, k/2, j/2, l/2) * (i%2 == k%2) * (j%2 == l%2)
+                                          - mo_ints(j/2, k/2, i/2, l/2) * (j%2 == k%2) * (i%2 == l%2);
                 }
             }
         }
     }
-    return ia_jb;
+    return so_ints;
 }
 
+Vector make_so_moes(const Vector& eps){
+    auto n = eps.rows() * 2;
+    Vector eps_so(n);
+    for (auto i = 0; i < n; i++){
+       eps_so(i) = eps(i/2);
+    }
+    return eps_so;
+}
+
+//DTensor get_iajb(const DTensor& ij_kl, const int& nocc, const int& nuocc)
+//{
+//    DTensor ia_jb(nocc, nuocc, nocc, nuocc);
+//    auto n = ij_kl.extent(0);
+//    for (auto i = 0; i < nocc; i++){
+//        for (auto a = 0; a < nuocc; a++){
+//            for (auto j = 0; j < nocc; j++){
+//                for (auto b = 0; b < nuocc; b++){
+//                    ia_jb(i,a,j,b) = ij_kl(i,nocc+a,j,nocc+b);
+//                }
+//            }
+//        }
+//    }
+//    return ia_jb;
+//}
+
+DTensor get_ijab(const DTensor& so_ints, const int& noo, const int& nvo){
+    DTensor ij_ab(noo, noo, nvo, nvo);
+    for (auto i = 0; i < noo; i++){
+        for (auto j = 0 ; j < noo; j++){
+            for (auto a = 0; a < nvo; a++){
+                for (auto b = 0; b < nvo; b++){
+                    ij_ab(i, j, a, b) = so_ints(i, j, noo + a, noo + b);
+                }
+            }
+        }
+    }
+    return ij_ab;
+}
+
+
 // Calculates MP2 Energy - MO Basis
-real_t mp2_energy(DTensor ia_jb, Vector eps){
+//real_t mp2_energy(DTensor ia_jb, Vector eps){
+//    real_t energy;
+//    auto nocc = ia_jb.extent(0);
+//    auto nuocc = ia_jb.extent(1);
+//    energy = 0.0;
+//    for (auto i = 0; i < nocc; i++){
+//        for (auto a = 0; a < nuocc; a++){
+//            for (auto j = 0; j < nocc; j++){
+//                for (auto b = 0; b < nuocc; b++){
+//                    energy += ia_jb(i, a, j, b) *
+//                              (2 * ia_jb(i, a, j, b) - ia_jb(i, b, j, a))/
+//                              (eps[i] + eps[j] - eps[nocc + a] - eps[nocc + b]);
+//                }
+//            }
+//        }
+//    }
+//    return energy;
+//}
+
+real_t mp2_energy(DTensor ij_ab, Vector eps_so){
     real_t energy;
-    auto nocc = ia_jb.extent(0);
-    auto nuocc = ia_jb.extent(1);
+    auto noo = ij_ab.extent(0);
+    auto nvo = ij_ab.extent(2);
     energy = 0.0;
-    for (auto i = 0; i < nocc; i++){
-        for (auto a = 0; a < nuocc; a++){
-            for (auto j = 0; j < nocc; j++){
-                for (auto b = 0; b < nuocc; b++){
-                    energy += ia_jb(i, a, j, b) *
-                              (2 * ia_jb(i, a, j, b) - ia_jb(i, b, j, a))/
-                              (eps[i] + eps[j] - eps[nocc + a] - eps[nocc + b]);
+    for (auto i = 0; i < noo; i++){
+        for (auto j = 0; j < noo; j++){
+            for (auto a = 0; a < nvo; a++){
+                for (auto b = 0; b < nvo; b++){
+                    energy += 0.25 * ij_ab(i, j, a, b) * ij_ab(i, j, a, b)
+                              /(eps_so[i] + eps_so[j] - eps_so[noo + a] - eps_so[noo + b]);
                 }
             }
         }
     }
     return energy;
 }
+
 
 // Main MP2 Function
 mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf)
@@ -172,9 +231,12 @@ mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf)
     auto ao_ints = eri_ao_tensor(obs);
     // Transform AO to MO basis
     auto mo_ints = transform_ao_mo(ao_ints, scf.C);
-    auto ia_jb = get_iajb(mo_ints, scf.noo/2, scf.nvo/2);
-    results.energy = mp2_energy(ia_jb, scf.moes);
-    results.T = ia_jb;
+    auto so_ints = transform_to_so(mo_ints);
+    auto moes = make_so_moes(scf.moes);
+    auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
+    results.energy = mp2_energy(ij_ab, moes);
+
+    //results.T = ia_jb;
     std::cout << "MP2 Energy: " << results.energy << " Eh" << std::endl;
     return results;
 }
