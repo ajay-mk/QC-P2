@@ -1,15 +1,15 @@
-#include <cmath>
 #include <iostream>
 #include <vector>
-
-#include <Eigen/Eigenvalues>
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
 #if !LIBINT2_CONSTEXPR_STATICS
 #include <libint2/statics_definition.h>
 #endif
+
+//BTAS
 #include "btas/btas.h"
+
 // Include Headers
 #include "general.h"
 #include "hf.h"
@@ -72,5 +72,4 @@ int main(int argc, char *argv[]) {
              << config.type << " is not a supported method" << endl;
     }
 }
-
 // EOF
