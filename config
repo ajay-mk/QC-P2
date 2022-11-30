@@ -1,7 +1,7 @@
-input/water.xyz
+input/methane.xyz
 MP2
 RHF
 STO-3G
 2
 200
-1e-10
+1e-12
