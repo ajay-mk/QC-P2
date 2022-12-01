@@ -249,7 +249,6 @@ DTensor get_ijab(const DTensor &so_ints, const int &noo, const int &nvo) {
     return ij_ab;
 }
 
-
 // Calculates MP2 Energy - MO Basis
 //real_t mp2_energy(DTensor ia_jb, Vector eps){
 //    real_t energy;
