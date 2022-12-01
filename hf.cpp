@@ -376,6 +376,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     std::cout << std::endl
               << "Number of occupied orbitals: " << results.noo << std::endl
               << "Number of virtual orbitals: " << results.nvo << std::endl;
+    results.nao = nao;
 
     // Initializing Libint
     libint2::initialize();
@@ -497,6 +498,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     std::cout << std::endl
               << "Number of occupied orbitals: " << results.noo << std::endl
               << "Number of virtual orbitals: " << results.nvo << std::endl;
+    results.nao = nao;
 
     std::cout << std::endl
               << "Starting UHF calculation" << std::endl;

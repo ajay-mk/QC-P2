@@ -1,7 +1,7 @@
-input/water.xyz
+input/nh2.xyz
 MP2
-RHF
-STO-3G
+UHF
+sto-3g
 2
 200
-1e-10
+1e-12

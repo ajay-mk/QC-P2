@@ -11,7 +11,7 @@
 ///TODO: Dictionary type construct for config
 params read_config(const std::string& config_file){
     std::cout << std::endl
-              << "Reading configurations from " << config_file << std::endl;
+              << "Reading configuration from " << config_file << std::endl;
     params config;
     // Expected Format of Config File
     // Input Geometry
