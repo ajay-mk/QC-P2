@@ -14,7 +14,7 @@
 #include "mp2.h"
 
 // Function Definitions
-
+// Integral engines are from the example: https://github.com/evaleev/libint/blob/master/tests/hartree-fock/hartree-fock.cc
 DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
     using libint2::Shell;
     using libint2::Engine;
