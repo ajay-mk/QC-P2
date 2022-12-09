@@ -10,4 +10,8 @@
 #include "hf.h"
 #include "mp2.h"
 
+
+real_t ccsd_energy(const DTensor& T1, const DTensor&td, const DTensor& ij_ab, const DTensor F_spin);
+
+
 #endif//P2_CC_H
