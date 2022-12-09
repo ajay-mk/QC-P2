@@ -18,7 +18,7 @@ FetchContent_GetProperties(BTAS
 #find_package(Eigen3 REQUIRED)
 find_package(Libint2 REQUIRED)
 
-add_executable(P2 main.cpp hf.cpp mp2.cpp general.cpp general.h hf.h mp2.h integrals.cpp integrals.h)
+add_executable(P2 main.cpp hf.cpp mp2.cpp general.cpp general.h hf.h mp2.h integrals.cpp integrals.h cc.cpp cc.h)
 
 #target_link_libraries(P2 Eigen3::Eigen)
 target_link_libraries(P2 BTAS)
