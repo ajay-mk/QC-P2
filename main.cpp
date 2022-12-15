@@ -7,9 +7,6 @@
 #include <libint2/statics_definition.h>
 #endif
 
-//BTAS
-#include "btas/btas.h"
-
 // Include Headers
 #include "general.h"
 #include "hf.h"
@@ -33,9 +30,8 @@ int main(int argc, char *argv[]) {
 
     // Counting the number of electrons
     auto nelectron = 0;
-    for (auto i = 0; i < atoms.size(); ++i)
-        nelectron += atoms[i].atomic_number;
-    const auto ndocc = nelectron / 2;
+    for (auto & atom : atoms)
+        nelectron += atom.atomic_number;
 
     print_geometry(atoms);
     cout << "Number of electrons = " << nelectron << endl;

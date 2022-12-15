@@ -3,14 +3,6 @@
 //
 // Contains functions relevant to MP2 Calculations
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#include <libint2/chemistry/sto3g_atomic_density.h>
-#if !LIBINT2_CONSTEXPR_STATICS
-#  include <libint2/statics_definition.h>
-#endif
-#include "btas/btas.h"
-
 #include "mp2.h"
 
 
@@ -86,7 +78,7 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         auto moes = make_so_moes(scf.moes, scf.nao);
         auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
         results.energy = mp2_energy(ij_ab, moes);
-        //results.T = ij_ab;
+        results.T = ij_ab;
     }
     else if (config.scf == "UHF" || config.scf == "uhf") {
         auto ao_ints = eri_ao_tensor(obs);
@@ -98,7 +90,7 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         //std::cout << moes << std::endl;
         auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
         results.energy = mp2_energy(ij_ab, moes);
-        //results.T = ij_ab;
+        results.T = ij_ab;
     }
     std::cout << "MP2 Energy: " << results.energy << " Eh" << std::endl;
     return results;
