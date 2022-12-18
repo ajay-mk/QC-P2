@@ -11,6 +11,7 @@
 //Structs
 struct mp2_results{
     real_t energy;
+    DTensor so_ints;
     DTensor T;
 };
 

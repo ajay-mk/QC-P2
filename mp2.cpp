@@ -74,9 +74,9 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         // Transform AO to spatial MO basis
         auto mo_ints = transform_ao_mo(ao_ints, scf.C);
         // Transform to spin MO basis
-        auto so_ints = transform_to_so(mo_ints);
+        results.so_ints = transform_to_so(mo_ints);
         auto moes = make_so_moes(scf.moes, scf.nao);
-        auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
+        auto ij_ab = get_ijab(results.so_ints, scf.noo, scf.nvo);
         results.energy = mp2_energy(ij_ab, moes);
         results.T = ij_ab;
     }
@@ -85,10 +85,10 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         auto mo_ints_aa = transform_ao_mo_uhf(ao_ints, scf.Ca, scf.Ca);
         auto mo_ints_bb = transform_ao_mo_uhf(ao_ints, scf.Cb, scf.Cb);
         auto mo_ints_ab = transform_ao_mo_uhf(ao_ints, scf.Ca, scf.Cb);
-        auto so_ints = transform_to_so_uhf(mo_ints_aa, mo_ints_bb, mo_ints_ab);
+        results.so_ints = transform_to_so_uhf(mo_ints_aa, mo_ints_bb, mo_ints_ab);
         auto moes = make_so_moes_uhf(scf.moes_a, scf.moes_b, scf.nao);
         //std::cout << moes << std::endl;
-        auto ij_ab = get_ijab(so_ints, scf.noo, scf.nvo);
+        auto ij_ab = get_ijab(results.so_ints, scf.noo, scf.nvo);
         results.energy = mp2_energy(ij_ab, moes);
         results.T = ij_ab;
     }
