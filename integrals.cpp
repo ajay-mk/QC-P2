@@ -192,3 +192,43 @@ DTensor transform_to_so_uhf(const DTensor& mo_ints_aa, const DTensor& mo_ints_bb
     return so_ints;
 }
 
+DTensor make_denom(const DTensor& F_spin, int no, int nv){
+    DTensor denom(no, no, nv, nv); // E_{ijab}
+    for (auto i = 0; i < no; i++){
+        for (auto j = 0; j < no; j++){
+            for (auto a = 0; a < nv; a++){
+                for (auto b = 0; b < nv; b++){
+                    denom(i, j, a, b) = F_spin(i, i) + F_spin(j, j) - F_spin(no + a, no + a) - F_spin(no + b, no + b);
+                }
+            }
+        }
+    }
+    return denom;
+}
+
+
+DTensor slice_ints(const DTensor& so_ints, int no, int nv, std::string int_string){
+    // For shape
+    auto n1 = (int_string[0]=='o')*no + (int_string[0]=='v')*nv;
+    auto n2 = (int_string[1]=='o')*no + (int_string[1]=='v')*nv;
+    auto n3 = (int_string[2]=='o')*no + (int_string[2]=='v')*nv;
+    auto n4 = (int_string[3]=='o')*no + (int_string[3]=='v')*nv;
+
+    auto m1 = (int_string[0]=='v')*no;
+    auto m2 = (int_string[1]=='v')*no;
+    auto m3 = (int_string[2]=='v')*no;
+    auto m4 = (int_string[3]=='v')*no;
+
+    DTensor int_slice(n1, n2, n3, n4);
+    for (auto i = 0; i < n1; i++){
+        for (auto j = 0; j < n2; j++){
+            for (auto a = 0; a < n3; a++){
+                for (auto b = 0; b < n4; b++){
+                    int_slice(i, j, a, b) = so_ints(i+m1, j+m2, a+m3, b+m4);
+                }
+            }
+        }
+    }
+    return int_slice;
+}
+

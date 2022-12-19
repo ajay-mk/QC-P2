@@ -10,8 +10,31 @@
 #include "hf.h"
 #include "mp2.h"
 
+// Structs
+struct cc_intermediates{
+    DTensor F_ae, F_mi, F_me, W_mnij, W_mbej, W_abef;
+};
 
-real_t ccsd_energy(const DTensor& T1, const DTensor&td, const DTensor& ij_ab, const DTensor F_spin);
 
+DTensor make_F_spin_rhf(const Vector &eps, const int& nao);
+DTensor make_F_spin_uhf(const Vector &eps_a, const Vector& eps_b, const int& nao);
+
+DTensor make_D_ia(const DTensor& F_spin, const int& no, const int& nv);
+DTensor make_D_ijab(const DTensor& F_spin, const int& no, const int& nv);
+
+DTensor make_tau(const DTensor& Ts, const DTensor& Td);
+DTensor make_tau_bar(const DTensor& Ts, const DTensor& Td);
+DTensor multiply_Ts(const DTensor& Ts);
+
+DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integrals,
+                const cc_intermediates& intermediates, const DTensor& D_ia, const DTensor& F_spin);
+DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integrals,
+                const cc_intermediates& intermediates, const DTensor& D_ijab, const DTensor& F_spin);
+
+cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td, const int_struct& integrals, const DTensor& F_spin);
+
+real_t ccsd_energy(const DTensor& T1, const DTensor&td, const DTensor& ij_ab, const DTensor& F_spin);
+
+real_t CCSD(const DTensor& ERI, const scf_results& SCF, const mp2_results& MP2, const params& config);
 
 #endif//P2_CC_H
