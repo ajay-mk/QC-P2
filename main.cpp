@@ -63,6 +63,17 @@ int main(int argc, char *argv[]) {
         auto mp2_result = MP2(obs, hf_result, config);
         cout << "Total MP2 energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
     }
+    // CCSD Bracket
+    else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "RHF" || config.scf == "rhf")){
+        auto hf_result = RHF(atoms, obs, nao, nelectron, config);
+        auto mp2_result = MP2(obs, hf_result, config);
+        auto CC_Energy = CCSD(hf_result, mp2_result, config);
+    }
+    else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "UHF" || config.scf == "UHF")) {
+        auto hf_result = UHF(atoms, obs, nao, nelectron, config);
+        auto mp2_result = MP2(obs, hf_result, config);
+        auto CC_Energy = CCSD(hf_result, mp2_result, config);
+    }
     // Other Methods
     else{
         cout << endl
