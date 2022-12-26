@@ -17,6 +17,10 @@ struct cc_intermediates{
 struct moes{
     DTensor F, F_ii, F_ia, F_aa;
 };
+struct cc_results{
+    DTensor T1, T2;
+    real_t ccsd_energy;
+};
 
 
 DTensor make_F_spin_rhf(const Vector &eps, const int& nao);
@@ -42,6 +46,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td, cons
 
 real_t ccsd_energy(const DTensor& ts, const DTensor& td, const DTensor& oovv, const moes& moes);
 
-real_t CCSD(const scf_results& SCF, const mp2_results& MP2, const params& config);
+cc_results CCSD(const scf_results& SCF, const mp2_results& MP2, const params& config);
 
 #endif//P2_CC_H

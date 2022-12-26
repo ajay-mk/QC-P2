@@ -388,8 +388,8 @@ real_t ccsd_energy(const DTensor& ts, const DTensor& td, const DTensor& oovv, co
 
 // CCSD Function
 
-real_t CCSD(const scf_results& scf, const mp2_results& mp2, const params& config){
-    real_t energy = 0.0;
+cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& config){
+    cc_results results;
     auto integrals = get_integrals(scf, mp2);
     DTensor F_spin;
     if (config.scf == "RHF")
@@ -403,8 +403,9 @@ real_t CCSD(const scf_results& scf, const mp2_results& mp2, const params& config
 
     DTensor Ts(scf.noo, scf.nvo);
     Ts.fill(0.0);
+    results.T1 = Ts;
 
-    auto Td = mp2.T; // Initial T2 guess from MP2
+    results.T2 = mp2.T; // Initial T2 guess from MP2
 
     // Starting iterations
     real_t E_CC_last = 0.0;
@@ -412,26 +413,27 @@ real_t CCSD(const scf_results& scf, const mp2_results& mp2, const params& config
         if (iter == 0){
             std::cout << std::endl << "Iter         E_CC (Eh)        Delta(E_CC)" << std::endl;}
 
-        auto E_CC = ccsd_energy(Ts, Td, integrals.oovv, moes);
-        auto Del_E_CC = E_CC - E_CC_last;
+        results.ccsd_energy = ccsd_energy(results.T1, results.T2, integrals.oovv, moes);
+        auto Del_E_CC = results.ccsd_energy - E_CC_last;
 
-        E_CC_last = E_CC;
+        E_CC_last = results.ccsd_energy;
 
-        printf(" %02d %20.12f %20.12f\n", iter, E_CC, Del_E_CC);
+        printf(" %02d %20.12f %20.12f\n", iter, results.ccsd_energy, Del_E_CC);
         if (abs(Del_E_CC) < config.conv){
             break ;
         }
         // Write code for updating intermediates
         //std::cout << "Updating intermediates" << std::endl;
-        cc_intermediates intermediates = update_intermediates(Ts, Td, integrals, F_spin, moes);
+        cc_intermediates intermediates = update_intermediates(results.T1, results.T2, integrals, F_spin, moes);
 
         // Make T1 & T2
 
-        Ts = make_T1(Ts, Td, integrals, intermediates, D_ia, F_spin);
+        results.T1 = make_T1(results.T1, results.T2, integrals, intermediates, D_ia, F_spin);
         //std::cout << "T1 Updated" << std::endl;
-        Td = make_T2(Ts, Td, integrals, intermediates, D_ijab, F_spin);
+        results.T2 = make_T2(results.T1, results.T2, integrals, intermediates, D_ijab, F_spin);
         //std::cout << "T2 Updated" << std::endl;
 
     }
-    return energy;
+    std::cout << std::endl;
+    return results;
 }

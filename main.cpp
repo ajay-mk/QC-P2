@@ -67,12 +67,17 @@ int main(int argc, char *argv[]) {
     else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "RHF" || config.scf == "rhf")){
         auto hf_result = RHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
-        auto CC_Energy = CCSD(hf_result, mp2_result, config);
+        auto ccsd_result = CCSD(hf_result, mp2_result, config);
+        cout << "CCSD energy: " << ccsd_result.ccsd_energy << " Eh" << endl;
+        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
+
     }
     else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "UHF" || config.scf == "UHF")) {
         auto hf_result = UHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
-        auto CC_Energy = CCSD(hf_result, mp2_result, config);
+        auto ccsd_result = CCSD(hf_result, mp2_result, config);
+        cout << "CCSD energy: " << ccsd_result.ccsd_energy << " Eh" << endl;
+        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
     }
     // Other Methods
     else{
