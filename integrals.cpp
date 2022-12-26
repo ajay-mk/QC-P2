@@ -176,22 +176,22 @@ DTensor transform_to_so(const DTensor& mo_ints_aa, const DTensor& mo_ints_bb, co
             for (auto k = 0; k < n; k++) {
                 for (auto l = 0; l < n; l++) {
                     if (i % 2 == 0 && k % 2 == 0 && j % 2 == 0 && l % 2 == 0)
-                        so_ints(i, j, k, l) = mo_ints_aa(i / 2, k / 2, j / 2, l / 2) - mo_ints_aa(j / 2, k / 2, i / 2, l / 2);
+                        so_ints(i, j, k, l) = mo_ints_aa(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) - mo_ints_aa(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
                     else if (i % 2 == 1 && k % 2 == 1 && j % 2 == 1 && l % 2 == 1)
-                        so_ints(i, j, k, l) = mo_ints_bb(i / 2, k / 2, j / 2, l / 2) - mo_ints_bb(j / 2, k / 2, i / 2, l / 2);
+                        so_ints(i, j, k, l) = mo_ints_bb(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) - mo_ints_bb(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
                     else if (i % 2 == 0 && k % 2 == 0 && j % 2 == 1 && l % 2 == 1)
-                        so_ints(i, j, k, l) = mo_ints_ab(i / 2, k / 2, j / 2, l / 2);
+                        so_ints(i, j, k, l) = mo_ints_ab(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2));
 
                     else if (i % 2 == 1 && k % 2 == 1 && j % 2 == 0 && l % 2 == 0)
-                        so_ints(i, j, k, l) = mo_ints_ab(i / 2, k / 2, j / 2, l / 2);
+                        so_ints(i, j, k, l) = mo_ints_ab(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2));
 
                     else if (i % 2 == 1 && k % 2 == 0 && j % 2 == 0 && l % 2 == 1)
-                        so_ints(i, j, k, l) = -mo_ints_ab(j / 2, k / 2, i / 2, l / 2);
+                        so_ints(i, j, k, l) = -mo_ints_ab(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
                     else if (i % 2 == 0 && k % 2 == 1 && j % 2 == 1 && l % 2 == 0)
-                        so_ints(i, j, k, l) = -mo_ints_ab(j / 2, k / 2, i / 2, l / 2);
+                        so_ints(i, j, k, l) = -mo_ints_ab(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
                 }
             }
         }
