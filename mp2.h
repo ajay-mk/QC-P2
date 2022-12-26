@@ -16,8 +16,8 @@ struct mp2_results{
 };
 
 
-DTensor make_so_moes(const Vector& eps, const int& nao);
-DTensor make_so_moes_uhf(const Vector& eps_a, const Vector& eps_b, const int& nao);
+//DTensor make_so_moes(const Vector& eps, const int& nao);
+DTensor make_so_moes(const Vector& eps_a, const Vector& eps_b, const int& nao);
 
 real_t mp2_energy(const DTensor& oovv, const DTensor& denom);
 DTensor mp2_tensor(const DTensor& oovv, const DTensor& denom);

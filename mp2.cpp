@@ -8,16 +8,16 @@
 
 // Function Definitions
 
-DTensor make_so_moes(const Vector &eps, const int& nao) {
-    auto n = nao * 2;
-    DTensor eps_so(n, n);
-    for (auto i = 0; i < n; i++) {
-        eps_so(i, i) = eps(i/2);
-    }
-    return eps_so;
-}
+//DTensor make_so_moes(const Vector &eps, const int& nao) {
+//    auto n = nao * 2;
+//    DTensor eps_so(n, n);
+//    for (auto i = 0; i < n; i++) {
+//        eps_so(i, i) = eps(i/2);
+//    }
+//    return eps_so;
+//}
 
-DTensor make_so_moes_uhf(const Vector& eps_a, const Vector& eps_b, const int& nao){
+DTensor make_so_moes(const Vector& eps_a, const Vector& eps_b, const int& nao){
     auto n = nao * 2;
     DTensor eps_so(n, n);
     for (auto i = 0; i < n; i++) {
@@ -38,7 +38,7 @@ real_t mp2_energy(const DTensor& oovv, const DTensor& denom) {
         for (auto j = 0; j < noo; j++) {
             for (auto a = 0; a < nvo; a++) {
                 for (auto b = 0; b < nvo; b++) {
-                    energy += 0.25 * oovv(i, j, a, b) * oovv(i, j, a, b) / denom(i, j, a, b);
+                    energy += 0.25 * (oovv(i, j, a, b) * oovv(i, j, a, b)) / denom(i, j, a, b);
                 }
             }
         }
@@ -72,25 +72,36 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
     if (config.scf == "RHF" || config.scf == "rhf") {
         // Calculating AO Integrals
         auto ao_ints = eri_ao_tensor(obs);
+
         // Transform AO to spatial MO basis
-        auto mo_ints = transform_ao_mo(ao_ints, scf.C);
+        auto mo_ints = transform_ao_mo(ao_ints, scf.C, scf.C);
+
         // Transform to spin MO basis
-        results.so_ints = transform_to_so(mo_ints);
-        auto moes = make_so_moes(scf.moes, scf.nao);
+        results.so_ints = transform_to_so(mo_ints, mo_ints, mo_ints);
+
+        auto moes = make_so_moes(scf.moes, scf.moes, scf.nao);
+
         auto oovv = slice_ints(results.so_ints, scf.noo, scf.nvo, "oovv"); //(ij|ab)
+
         auto denom = make_denom(moes, scf.noo, scf.nvo);
+
         results.energy = mp2_energy(oovv, denom);
         results.T = mp2_tensor(oovv, denom);
     }
+
     else if (config.scf == "UHF" || config.scf == "uhf") {
         auto ao_ints = eri_ao_tensor(obs);
-        auto mo_ints_aa = transform_ao_mo_uhf(ao_ints, scf.Ca, scf.Ca);
-        auto mo_ints_bb = transform_ao_mo_uhf(ao_ints, scf.Cb, scf.Cb);
-        auto mo_ints_ab = transform_ao_mo_uhf(ao_ints, scf.Ca, scf.Cb);
-        results.so_ints = transform_to_so_uhf(mo_ints_aa, mo_ints_bb, mo_ints_ab);
-        auto moes = make_so_moes_uhf(scf.moes_a, scf.moes_b, scf.nao);
+
+        auto mo_ints_aa = transform_ao_mo(ao_ints, scf.Ca, scf.Ca);
+        auto mo_ints_bb = transform_ao_mo(ao_ints, scf.Cb, scf.Cb);
+        auto mo_ints_ab = transform_ao_mo(ao_ints, scf.Ca, scf.Cb);
+
+        results.so_ints = transform_to_so(mo_ints_aa, mo_ints_bb, mo_ints_ab);
         auto oovv = slice_ints(results.so_ints, scf.noo, scf.nvo, "oovv"); //(ij|ab)
+
+        auto moes = make_so_moes(scf.moes_a, scf.moes_b, scf.nao);
         auto denom = make_denom(moes, scf.noo, scf.nvo);
+
         results.energy = mp2_energy(oovv, denom);
         results.T = mp2_tensor(oovv, denom);
     }
