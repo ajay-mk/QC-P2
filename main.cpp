@@ -51,33 +51,46 @@ int main(int argc, char *argv[]) {
     if(config.type == "RHF" || config.type == "rhf")
         auto hf_result = RHF(atoms, obs, nao, nelectron, config);
     else if(config.type == "UHF" || config.type == "uhf")
-        auto uhf_result = UHF(atoms, obs, nao, nelectron, config);
-    // MP2 Bracket
-    else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "RHF" || config.scf == "rhf")){
-        auto hf_result = RHF(atoms, obs, nao, nelectron, config);
-        auto mp2_result = MP2(obs, hf_result, config);
-        cout << "Total MP2 energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
-    }
-    else if((config.type == "MP2" || config.type == "mp2") && (config.scf == "UHF" || config.scf == "UHF")){
         auto hf_result = UHF(atoms, obs, nao, nelectron, config);
-        auto mp2_result = MP2(obs, hf_result, config);
-        cout << "Total MP2 energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
-    }
-    // CCSD Bracket
-    else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "RHF" || config.scf == "rhf")){
-        auto hf_result = RHF(atoms, obs, nao, nelectron, config);
-        auto mp2_result = MP2(obs, hf_result, config);
-        auto ccsd_result = CCSD(hf_result, mp2_result, config);
-        cout << "CCSD energy: " << ccsd_result.ccsd_energy << " Eh" << endl;
-        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
 
+    // MP2 Bracket
+    else if(config.type == "MP2" || config.type == "mp2"){
+        scf_results hf_result;
+        if (config.scf == "RHF" || config.scf == "rhf")
+            hf_result = RHF(atoms, obs, nao, nelectron, config);
+        else if (config.scf == "UHF" || config.scf == "UHF")
+            hf_result = UHF(atoms, obs, nao, nelectron, config);
+        auto mp2_result = MP2(obs, hf_result, config);
+
+        cout << "Total MP2 energy: " << hf_result.energy + mp2_result.energy << " Eh" << endl;
     }
-    else if((config.type == "CCSD" || config.type == "ccsd") && (config.scf == "UHF" || config.scf == "UHF")) {
-        auto hf_result = UHF(atoms, obs, nao, nelectron, config);
+
+    // Coupled Cluster Bracket
+    else if(config.type == "CCSD" || config.type == "ccsd"){
+        scf_results hf_result;
+        if (config.scf == "RHF" || config.scf == "rhf")
+            hf_result = RHF(atoms, obs, nao, nelectron, config);
+        else if (config.scf == "UHF" || config.scf == "UHF")
+            hf_result = UHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
         auto ccsd_result = CCSD(hf_result, mp2_result, config);
-        cout << "CCSD energy: " << ccsd_result.ccsd_energy << " Eh" << endl;
+
         cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
+    }
+
+    else if(config.type == "CCSD(T)" || config.type == "ccsd(t)"){
+        scf_results hf_result;
+        if (config.scf == "RHF" || config.scf == "rhf")
+            hf_result = RHF(atoms, obs, nao, nelectron, config);
+        else if (config.scf == "UHF" || config.scf == "UHF")
+            hf_result = UHF(atoms, obs, nao, nelectron, config);
+        auto mp2_result = MP2(obs, hf_result, config);
+        auto ccsd_result = CCSD(hf_result, mp2_result, config);
+        auto moes = make_moe_tensors(hf_result, config);
+        auto t_energy = CCSD_T(ccsd_result, moes);
+
+        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy + t_energy<< " Eh" << endl;
+
     }
     // Other Methods
     else{
