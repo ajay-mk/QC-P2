@@ -70,8 +70,8 @@ moes make_moe_tensors(const scf_results& scf, const params& config){
 
 // Stanton Equation #12
 DTensor make_D_ia(const moes& moes){
-    auto no = moes.F_ia.extent(0);
-    auto nv = moes.F_ia.extent(1);
+    auto no = moes.F_ii.extent(0);
+    auto nv = moes.F_aa.extent(0);
     DTensor D_ia(no, nv);
     for (auto i = 0; i < no; i++){
         for (auto a = 0; a < nv; a++){
@@ -83,10 +83,9 @@ DTensor make_D_ia(const moes& moes){
 
 // Stanton Equation #13
 DTensor make_D_ijab(const moes& moes){
-    auto no = moes.F_ia.extent(0);
-    auto nv = moes.F_ia.extent(1);
+    auto no = moes.F_ii.extent(0);
+    auto nv = moes.F_aa.extent(0);
     DTensor D_ijab(no,no,nv,nv);
-    D_ijab.fill(0.0);
     for (auto i = 0; i < no; i++){
         for (auto j = 0; j < no; j++){
             for (auto a = 0; a <nv ; a++){
@@ -100,8 +99,8 @@ DTensor make_D_ijab(const moes& moes){
 }
 
 DTensor make_D_triples(const moes& moes){
-    auto no = moes.F_ia.extent(0);
-    auto nv = moes.F_ia.extent(1);
+    auto no = moes.F_ii.extent(0);
+    auto nv = moes.F_aa.extent(1);
     DTensor D_triples(no, no, no, nv, nv, nv);
     D_triples.fill(0.0);
     for (auto i = 0; i < no; i++){
@@ -156,12 +155,12 @@ DTensor make_tau_bar(const DTensor& Ts, const DTensor& Td){
 DTensor multiply_Ts(const DTensor& Ts){
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
-    DTensor result(no, no, nv, nv);
+    DTensor result(no, nv, no, nv);
     for (auto j = 0; j < no; j++){
         for (auto n = 0; n < no; n++){
             for (auto f = 0; f < nv; f++){
                 for (auto b = 0; b < nv; b++){
-                    result(j, n, f, b) = Ts(j, f) * Ts (n, b);
+                    result(j, f, n, b) = Ts(j, f) * Ts (n, b);
                 }
             }
         }
@@ -241,7 +240,7 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
     contract(1.0, Ts, {j, f}, integrals.ovvv, {m, b, e, f}, 1.0, W_mbej, {m, b, e, j});
     contract(-1.0, Ts, {n, b}, integrals.oovo, {m, n, e, j}, 1.0, W_mbej, {m, b, e, j});
     contract(-0.5, Td, {j, n, f, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej, {m, b, e, j}); // Split last term into two
-    contract(-1.0, multiply_Ts(Ts), {j, n, f, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej, {m, b, e, j});
+    contract(-1.0, multiply_Ts(Ts), {j, f, n, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej, {m, b, e, j});
     W_mbej += integrals.ovvo; // First term of Equation #8
 
     intermediates.W_mbej = W_mbej;
@@ -264,14 +263,9 @@ DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     contract(-1.0, Ts, {n, f}, integrals.ovov, {n, a, i, f}, 1.0, tempT1, {i, a});
     contract(-0.5, Td, {i, m, e, f}, integrals.ovvv, {m, a, e, f}, 1.0, tempT1, {i, a});
     contract(-0.5, Td, {m, n, a, e}, integrals.oovo, {n, m, e, i}, 1.0, tempT1, {i, a});
+
     // For first part of equation #1
-    DTensor moes_ia(no, nv);
-    for (auto i = 0; i < no; i++){
-        for (auto a = 0; a < nv; a++){
-            moes_ia(i, a) = moes.F_ia(i, a);
-        }
-    }
-    tempT1 += moes_ia;
+    tempT1 += moes.F_ia;
 
     // Since Equation #1 is for t_ia * D_ia
     DTensor newT1(no, nv);
@@ -280,7 +274,8 @@ DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integral
             newT1(i, a) = tempT1(i,a)/D_ia(i, a);
         }
     }
-    //tempT1(0, 0); // Free up
+    tempT1(0, 0); // Free up
+
     return newT1;
 }
 
@@ -310,7 +305,7 @@ DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     // Do the same with switching a & b
     d1 -= d1; // Clearing d1
     contract(1.0, Ts, {m, a}, intermediates.F_me, {m, e}, 1.0, d1, {a, e});
-    contract(-0.5, Td, {i, j, b, e}, d1, {a, e}, 1.0, tempT2, {i, j, a, b});
+    contract(0.5, Td, {i, j, b, e}, d1, {a, e}, 1.0, tempT2, {i, j, a, b});
     d1(0, 0); // Free up
 
 
@@ -325,7 +320,7 @@ DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     contract(-0.5, Td, {i, m, a, b}, d2, {j, m}, 1.0, tempT2, {i, j, a, b});
     d2 -= d2;
     contract(1.0, Ts, {i, e}, intermediates.F_me, {m, e}, 1.0, d2, {i, m});
-    contract(-0.5, Td, {j, m, a, b}, d2, {i, m}, 1.0, tempT2, {i, j, a, b});
+    contract(0.5, Td, {j, m, a, b}, d2, {i, m}, 1.0, tempT2, {i, j, a, b});
 
 
     contract(0.5, make_tau(Ts, Td), {m, n, a, b}, intermediates.W_mnij, {m, n, i, j}, 1.0, tempT2, {i, j, a, b}); //4th term
@@ -340,10 +335,10 @@ DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     contract(1.0, Td, {j, m, b, e}, intermediates.W_mbej, {m, a, e, i}, 1.0, tempT2, {i, j, a, b});
 
     // Second Part
-    contract(1.0, multiply_Ts(Ts), {i, m, e, a}, integrals.ovvo, {m, b, e, j}, 1.0, tempT2, {i, j, a, b});
-    contract(-1.0, multiply_Ts(Ts), {j, m, e, a}, integrals.ovvo, {m, b, e, i}, 1.0, tempT2, {i, j, a, b});
-    contract(-1.0, multiply_Ts(Ts), {i, m, e, b}, integrals.ovvo, {m, a, e, j}, 1.0, tempT2, {i, j, a, b});
-    contract(1.0, multiply_Ts(Ts), {j, m, e, b}, integrals.ovvo, {m, a, e, i}, 1.0, tempT2, {i, j, a, b});
+    contract(1.0, multiply_Ts(Ts), {i, e, m, a}, integrals.ovov, {m, b, j, e}, 1.0, tempT2, {i, j, a, b});
+    contract(-1.0, multiply_Ts(Ts), {j, e, m, a}, integrals.ovov, {m, b, i, e}, 1.0, tempT2, {i, j, a, b});
+    contract(-1.0, multiply_Ts(Ts), {i, e, m, b}, integrals.ovov, {m, a, j, e}, 1.0, tempT2, {i, j, a, b});
+    contract(1.0, multiply_Ts(Ts), {j, e, m, b}, integrals.ovov, {m, a, i, e}, 1.0, tempT2, {i, j, a, b});
 
     //7th term
     contract(1.0, Ts, {i, e}, integrals.vvvo, {a, b, e, j}, 1.0, tempT2, {i, j, a, b});
@@ -364,6 +359,8 @@ DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integral
             }
         }
     }
+    tempT2(0, 0, 0, 0); // Free up
+
     return newT2;
 }
 
@@ -414,6 +411,7 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
 
         printf(" %02d %20.12f %20.12f\n", iter, results.ccsd_energy, Del_E_CC);
         if (abs(Del_E_CC) < config.conv){
+            std::cout << "CC energy converged" << std::endl;
             break;
         }
         // Write code for updating intermediates
@@ -529,20 +527,21 @@ real_t CCSD_T(const cc_results& ccResults, const moes& moes){
     tempTc(0, 0, 0, 0, 0, 0);
     //std::cout << cT << std::endl;
 
-    real_t t_energy = 0.0;
+    real_t val = 0.0;
     for (auto i = 0; i < no; i++){
         for (auto j = 0; j < no; j++){
             for (auto k = 0; k < no; k++){
                 for (auto a = 0; a < nv; a++){
                     for (auto b = 0; b < nv; b++){
                         for (auto c = 0; c < nv; c++){
-                            t_energy += (1/36) * cT(i, j, k, a, b, c) * D_triples (i, j, k, a, b, c) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
+                            val += (cT(i, j, k, a, b, c) * D_triples (i, j, k, a, b, c)) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
                         }
                     }
                 }
             }
         }
     }
+    auto t_energy = val/36;
 
     std::cout << "(T) energy: " << t_energy << " Eh" << std::endl;
     return t_energy;
