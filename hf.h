@@ -27,7 +27,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, 1> Vector;
 
 struct scf_results{
     real_t energy;
-    int nalpha, nbeta, noo, nvo;
+    int nalpha, nbeta, no, nv;
     int nao;
     Matrix F, Fa, Fb, C, Ca, Cb, D, Da, Db;
     Vector moes, moes_a, moes_b;

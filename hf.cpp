@@ -371,11 +371,11 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     auto ndocc = nelectron/2;
 
     // Occupied and Virtual Orbitals
-    results.noo = 2 * (nelectron/2);
-    results.nvo = (2 * nao) - results.noo;
+    results.no = 2 * (nelectron/2);
+    results.nv = (2 * nao) - results.no;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << results.noo << std::endl
-              << "Number of virtual orbitals: " << results.nvo << std::endl;
+              << "Number of occupied orbitals: " << results.no << std::endl
+              << "Number of virtual orbitals: " << results.nv << std::endl;
     results.nao = nao;
 
     // Initializing Libint
@@ -492,11 +492,11 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
               << "Number of beta electrons: " << results.nbeta << std::endl;
 
     // Occupied and Virtual Orbitals
-    results.noo = 2 * (nelectron/2);
-    results.nvo = (2 * nao) - results.noo;
+    results.no = 2 * (nelectron/2);
+    results.nv = (2 * nao) - results.no;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << results.noo << std::endl
-              << "Number of virtual orbitals: " << results.nvo << std::endl;
+              << "Number of occupied orbitals: " << results.no << std::endl
+              << "Number of virtual orbitals: " << results.nv << std::endl;
     results.nao = nao;
 
     std::cout << std::endl

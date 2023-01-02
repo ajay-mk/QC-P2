@@ -6,17 +6,17 @@
 
 int_struct get_integrals(const scf_results& SCF, const mp2_results& MP2){
     int_struct output;
-    output.oooo = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "oooo");
-    output.ovoo = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "ovoo");
-    output.oovo = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "oovo");
-    output.ooov = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "ooov");
-    output.ovov = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "ovov");
-    output.ovvo = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "ovvo");
-    output.oovv = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "oovv");
-    output.vovv = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "vovv");
-    output.ovvv = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "ovvv");
-    output.vvvo = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "vvvo");
-    output.vvvv = slice_ints(MP2.so_ints, SCF.noo, SCF.nvo, "vvvv");
+    output.oooo = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "oooo");
+    output.ovoo = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "ovoo");
+    output.oovo = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "oovo");
+    output.ooov = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "ooov");
+    output.ovov = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "ovov");
+    output.ovvo = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "ovvo");
+    output.oovv = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "oovv");
+    output.vovv = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "vovv");
+    output.ovvv = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "ovvv");
+    output.vvvo = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "vvvo");
+    output.vvvv = slice_ints(MP2.so_ints, SCF.no, SCF.nv, "vvvv");
 
     return output;
 }
@@ -36,32 +36,32 @@ moes make_moe_tensors(const scf_results& scf, const params& config){
     moes result;
 
     if (config.scf == "RHF"){
-        result.F = make_fock(scf.moes, scf.moes, 0, scf.noo + scf.nvo);
-        result.F_ii = make_fock(scf.moes, scf.moes, 0, scf.noo);
-        result.F_aa = make_fock(scf.moes, scf.moes, scf.noo, scf.noo + scf.nvo);
-        DTensor F_ia(scf.noo, scf.nvo);
-        for (auto i = 0; i < scf.noo; i++){
-            for (auto a = 0; a < scf.nvo; a++){
-                F_ia(i, a) = result.F(i, scf.noo + a);
+        result.F = make_fock(scf.moes, scf.moes, 0, scf.no + scf.nv);
+        result.F_ii = make_fock(scf.moes, scf.moes, 0, scf.no);
+        result.F_aa = make_fock(scf.moes, scf.moes, scf.no, scf.no + scf.nv);
+        DTensor F_ia(scf.no, scf.nv);
+        for (auto i = 0; i < scf.no; i++){
+            for (auto a = 0; a < scf.nv; a++){
+                F_ia(i, a) = result.F(i, scf.no + a);
             }
         }
         result.F_ia = F_ia;
     }
 
     if (config.scf == "UHF"){
-        result.F = make_fock(scf.moes_a, scf.moes_b, 0, scf.noo + scf.nvo);
-        result.F_ii = make_fock(scf.moes_a, scf.moes_b, 0, scf.noo);
+        result.F = make_fock(scf.moes_a, scf.moes_b, 0, scf.no + scf.nv);
+        result.F_ii = make_fock(scf.moes_a, scf.moes_b, 0, scf.no);
 
-        DTensor F_aa(scf.nvo, scf.nvo);
-        for (auto a = 0; a < scf.nvo; a++){
-            F_aa (a, a) = result.F(scf.noo + a, scf.noo + a);
+        DTensor F_aa(scf.nv, scf.nv);
+        for (auto a = 0; a < scf.nv; a++){
+            F_aa (a, a) = result.F(scf.no + a, scf.no + a);
         }
         result.F_aa = F_aa;
 
-        DTensor F_ia(scf.noo, scf.nvo);
-        for (auto i = 0; i < scf.noo; i++){
-            for (auto a = 0; a < scf.nvo; a++){
-                F_ia(i, a) = result.F(i, scf.noo + a);
+        DTensor F_ia(scf.no, scf.nv);
+        for (auto i = 0; i < scf.no; i++){
+            for (auto a = 0; a < scf.nv; a++){
+                F_ia(i, a) = result.F(i, scf.no + a);
             }
         }
     }
@@ -383,7 +383,7 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
     auto D_ia = make_D_ia(moes);
     auto D_ijab = make_D_ijab(moes);
 
-    DTensor Ts(scf.noo, scf.nvo);
+    DTensor Ts(scf.no, scf.nv);
     Ts.fill(0.0);
     results.T1 = Ts;
 
