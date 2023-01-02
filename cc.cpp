@@ -265,12 +265,6 @@ DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     contract(-0.5, Td, {m, n, a, e}, integrals.oovo, {n, m, e, i}, 1.0, tempT1, {i, a});
 
     // For first part of equation #1
-//    DTensor moes_ia(no, nv);
-//    for (auto i = 0; i < no; i++){
-//        for (auto a = 0; a < nv; a++){
-//            moes_ia(i, a) = moes.F_ia(i, a);
-//        }
-//    }
     tempT1 += moes.F_ia;
 
     // Since Equation #1 is for t_ia * D_ia
@@ -533,20 +527,21 @@ real_t CCSD_T(const cc_results& ccResults, const moes& moes){
     tempTc(0, 0, 0, 0, 0, 0);
     //std::cout << cT << std::endl;
 
-    real_t t_energy = 0.0;
+    real_t val = 0.0;
     for (auto i = 0; i < no; i++){
         for (auto j = 0; j < no; j++){
             for (auto k = 0; k < no; k++){
                 for (auto a = 0; a < nv; a++){
                     for (auto b = 0; b < nv; b++){
                         for (auto c = 0; c < nv; c++){
-                            t_energy += (1/36) * cT(i, j, k, a, b, c) * D_triples (i, j, k, a, b, c) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
+                            val += (cT(i, j, k, a, b, c) * D_triples (i, j, k, a, b, c)) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
                         }
                     }
                 }
             }
         }
     }
+    auto t_energy = val/36;
 
     std::cout << "(T) energy: " << t_energy << " Eh" << std::endl;
     return t_energy;
