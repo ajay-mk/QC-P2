@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         auto mp2_result = MP2(obs, hf_result, config);
         auto ccsd_result = CCSD(hf_result, mp2_result, config);
 
-        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
+        cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
     }
 
     else if(config.type == "CCSD(T)" || config.type == "ccsd(t)"){
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
         auto moes = make_moe_tensors(hf_result, config);
         auto t_energy = CCSD_T(ccsd_result, moes);
 
-        cout << "Total energy: " << hf_result.energy + mp2_result.energy + ccsd_result.ccsd_energy + t_energy<< " Eh" << endl;
+        cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy + t_energy<< " Eh" << endl;
 
     }
     // Other Methods
