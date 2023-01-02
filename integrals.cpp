@@ -91,33 +91,6 @@ DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
 
 // AO to MO transformation function : (pq|rs) --> (ia|jb) in Chemist's notation
 // <pr|qs> --> (ij|ab) in Dirac notation
-//DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& C){
-//    using btas::contract;
-//    DTensor ia_jb;
-//    const int n = pq_rs.extent(0);
-//
-//    DTensor C0(n,n);
-//    for (auto a = 0; a < n; a++){
-//        for (auto b = 0; b < n; b++){
-//            C0(a, b) = C(a, b);
-//        }
-//    }
-//    // Tensor Contractions
-//    DTensor pq_rl(n, n, n, n), pq_kl(n, n, n, n), pj_kl(n, n, n, n), ij_kl(n, n, n, n);
-//    enum {p, q, r, s, i, j, k, l};
-//    // sum{s} C_{s}^{b} (pq|rs)
-//    contract(1.0, pq_rs, {p, q, r, s}, C0, {s, l}, 1.0, pq_rl, {p, q, r, l});
-//    // sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))
-//    contract(1.0, pq_rl, {p, q, r, l}, C0, {r, k}, 1.0, pq_kl, {p, q, k, l});
-//    // sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs)))
-//    contract(1.0, pq_kl, {p, q, k, l}, C0, {q, j}, 1.0, pj_kl, {p, j, k, l});
-//    // sum{p} C_{p}^{i} (sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))))
-//    contract(1.0, pj_kl, {p, j, k, l}, C0, {p, i}, 1.0, ij_kl, {i, j, k, l});
-//
-//    //don't need other three tensors anymore
-//    pq_kl(0,0,0,0), pj_kl(0,0,0,0), pq_rl(0,0,0,0);
-//    return ij_kl;
-//}
 
 DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& Coeff1, const Matrix& Coeff2){
     using btas::contract;
@@ -150,23 +123,6 @@ DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& Coeff1, const Matrix
     pq_kl(0,0,0,0), pj_kl(0,0,0,0), pq_rl(0,0,0,0);
     return ij_kl;
 }
-
-
-//DTensor transform_to_so(const DTensor& mo_ints){
-//    auto n = mo_ints.extent(0) * 2;
-//    DTensor so_ints(n, n, n, n);
-//    for (auto i = 0; i < n; i++){
-//        for (auto j = 0; j < n; j++){
-//            for (auto k = 0; k < n; k++){
-//                for (auto l = 0; l < n; l++){
-//                    so_ints(i, j, k, l) = mo_ints(i/2, k/2, j/2, l/2) * (i%2 == k%2) * (j%2 == l%2)
-//                                          - mo_ints(j/2, k/2, i/2, l/2) * (j%2 == k%2) * (i%2 == l%2);
-//                }
-//            }
-//        }
-//    }
-//    return so_ints;
-//}
 
 DTensor transform_to_so(const DTensor& mo_ints_aa, const DTensor& mo_ints_bb, const DTensor& mo_ints_ab){
     auto n = mo_ints_aa.extent(0) * 2;
@@ -238,4 +194,6 @@ DTensor slice_ints(const DTensor& so_ints, int no, int nv, std::string int_strin
     }
     return int_slice;
 }
+
+// EOF
 

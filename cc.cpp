@@ -179,9 +179,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
 
     DTensor F_ae(nv, nv); // Stanton Equation #3
 
-//    std::cout << Ts.extent(0) << " " << Ts.extent(1) << std::endl;
-//    std::cout << moes.F_ia.extent(0) << " " << moes.F_ia.extent(1) << std::endl;
-//    std::cout << integrals.ovvv.extent(0) << " " << integrals.ovvv.extent(1) << std::endl;
     contract(-0.5, moes.F_ia, {m, e}, Ts, {m, a}, 1.0, F_ae, {a, e});
     contract(1.0, Ts, {m, f}, integrals.ovvv, {m, a, f, e}, 1.0, F_ae, {a, e});
     contract(-0.5, make_tau_bar(Ts, Td), {m, n, a, f}, integrals.oovv, {m, n, e, f}, 1.0, F_ae, {a, e});
@@ -192,7 +189,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
         }
     }
     intermediates.F_ae = F_ae; // Storing F_ae
-    //std::cout << "Eqn #3 Done" << std::endl;
 
 
     DTensor F_mi(no, no); // Stanton Equation #4
@@ -206,7 +202,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
         }
     }
     intermediates.F_mi = F_mi;
-    //std::cout << "Eqn #4 Done" << std::endl;
 
     DTensor F_me (no, nv); // Stanton Equation #5
     contract(1.0, Ts, {n, f}, integrals.oovv, {m, n, e, f}, 1.0, F_me, {m, e});
@@ -216,7 +211,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
         }
     }
     intermediates.F_me = F_me;
-    //std::cout << "Eqn #5 Done" << std::endl;
 
     DTensor W_mnij(no, no, no, no); // Stanton Equation #6
     contract(1.0, Ts, {j, e}, integrals.ooov, {m, n, i, e}, 1.0, W_mnij, {m, n, i, j});
@@ -225,7 +219,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
     W_mnij += integrals.oooo; // First term of Equation #6
 
     intermediates.W_mnij = W_mnij;
-    //std::cout << "Eqn #6 Done" << std::endl;
 
     DTensor W_abef(nv, nv, nv, nv); // Stanton Equation #7
     contract(-1.0, Ts, {m, b}, integrals.vovv, {a, m, e, f}, 1.0, W_abef, {a, b, e, f});
@@ -234,7 +227,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
     W_abef += integrals.vvvv; // First term of Equation #7
 
     intermediates.W_abef = W_abef;
-    //std::cout << "Eqn #7 Done" << std::endl;
 
     DTensor W_mbej(no, nv, nv, no); // Stanton Equation #8
     contract(1.0, Ts, {j, f}, integrals.ovvv, {m, b, e, f}, 1.0, W_mbej, {m, b, e, j});
@@ -244,7 +236,6 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
     W_mbej += integrals.ovvo; // First term of Equation #8
 
     intermediates.W_mbej = W_mbej;
-    //std::cout << "Eqn #8 Done" << std::endl;
 
     return intermediates;
 }
@@ -400,6 +391,7 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
 
     // Starting iterations
     real_t E_CC_last = 0.0;
+    std::cout << "Starting CCSD Calculations" << std::endl;
     for (auto iter = 0; iter < config.maxiter; iter++){
         if (iter == 0){
             std::cout << std::endl << "Iter         E_CC (Eh)        Delta(E_CC)" << std::endl;}
@@ -414,19 +406,13 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
             std::cout << "CC energy converged" << std::endl;
             break;
         }
-        // Write code for updating intermediates
-        //std::cout << "Updating intermediates" << std::endl;
         cc_intermediates intermediates = update_intermediates(results.T1, results.T2, results.sliced_ints, moes);
 
         // Make T1 & T2
-
         results.T1 = make_T1(results.T1, results.T2, results.sliced_ints, intermediates, D_ia, moes);
-        //std::cout << "T1 Updated" << std::endl;
         results.T2 = make_T2(results.T1, results.T2, results.sliced_ints, intermediates, D_ijab);
-        //std::cout << "T2 Updated" << std::endl;
 
     }
-    //std::cout << results.T2 << std::endl;
     std::cout << std::endl
               << "CCSD energy: " << results.ccsd_energy << " Eh" << std::endl;
     return results;
@@ -525,7 +511,6 @@ real_t CCSD_T(const cc_results& ccResults, const moes& moes){
         }
     }
     tempTc(0, 0, 0, 0, 0, 0);
-    //std::cout << cT << std::endl;
 
     real_t val = 0.0;
     for (auto i = 0; i < no; i++){
@@ -546,3 +531,5 @@ real_t CCSD_T(const cc_results& ccResults, const moes& moes){
     std::cout << "(T) energy: " << t_energy << " Eh" << std::endl;
     return t_energy;
 }
+
+// EOF

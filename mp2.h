@@ -15,12 +15,14 @@ struct mp2_results{
     DTensor T;
 };
 
+struct mp2_output{
+    real_t energy;
+    DTensor T;
+};
 
-//DTensor make_so_moes(const Vector& eps, const int& nao);
 DTensor make_so_moes(const Vector& eps_a, const Vector& eps_b, const int& nao);
 
-real_t mp2_energy(const DTensor& oovv, const DTensor& denom);
-DTensor mp2_tensor(const DTensor& oovv, const DTensor& denom);
+mp2_output run_mp2(const DTensor& oovv, const DTensor& denom);
 
 mp2_results MP2(const libint2::BasisSet& obs, const scf_results& scf, const params& config);
 

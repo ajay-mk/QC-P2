@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <iomanip>
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
@@ -16,13 +17,15 @@
 // Main
 int main(int argc, char *argv[]) {
 
+
     using std::cerr;
     using std::cout;
     using std::endl;
 
-    using libint2::BasisSet;
-
+    // Setting cout precision
     cout << std::setprecision(12);
+
+    using libint2::BasisSet;
 
     // Reading geometry and config from input files
     auto config = read_config(argv[1]);

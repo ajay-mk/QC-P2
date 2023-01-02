@@ -8,15 +8,6 @@
 
 // Function Definitions
 
-//DTensor make_so_moes(const Vector &eps, const int& nao) {
-//    auto n = nao * 2;
-//    DTensor eps_so(n, n);
-//    for (auto i = 0; i < n; i++) {
-//        eps_so(i, i) = eps(i/2);
-//    }
-//    return eps_so;
-//}
-
 DTensor make_so_moes(const Vector& eps_a, const Vector& eps_b, const int& nao){
     auto n = nao * 2;
     DTensor eps_so(n, n);
@@ -29,38 +20,25 @@ DTensor make_so_moes(const Vector& eps_a, const Vector& eps_b, const int& nao){
     return eps_so;
 }
 
-real_t mp2_energy(const DTensor& oovv, const DTensor& denom) {
-    real_t energy;
+mp2_output run_mp2(const DTensor& oovv, const DTensor& denom) {
     auto noo = oovv.extent(0);
     auto nvo = oovv.extent(2);
-    energy = 0.0;
+    mp2_output output;
+    real_t energy = 0.0;
+    DTensor T (noo, noo, nvo, nvo);
     for (auto i = 0; i < noo; i++) {
         for (auto j = 0; j < noo; j++) {
             for (auto a = 0; a < nvo; a++) {
                 for (auto b = 0; b < nvo; b++) {
+                    T(i, j, a, b) = oovv(i, j, a, b)/denom(i, j, a, b);
                     energy += 0.25 * (oovv(i, j, a, b) * oovv(i, j, a, b)) / denom(i, j, a, b);
                 }
             }
         }
     }
-    return energy;
-}
-
-// This is not the best way to do this; fix this later.
-DTensor mp2_tensor(const DTensor& oovv, const DTensor& denom) {
-    auto noo = oovv.extent(0);
-    auto nvo = oovv.extent(2);
-    DTensor result(noo, noo, nvo, nvo);
-    for (auto i = 0; i < noo; i++) {
-        for (auto j = 0; j < noo; j++) {
-            for (auto a = 0; a < nvo; a++) {
-                for (auto b = 0; b < nvo; b++) {
-                    result(i, j, a, b) = oovv(i, j, a, b)/denom(i, j, a, b);
-                }
-            }
-        }
-    }
-    return result;
+    output.T = T;
+    output.energy = energy;
+    return output;
 }
 
 // Main MP2 Function
@@ -85,8 +63,8 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
 
         auto denom = make_denom(moes, scf.noo, scf.nvo);
 
-        results.energy = mp2_energy(oovv, denom);
-        results.T = mp2_tensor(oovv, denom);
+        results.energy = run_mp2(oovv, denom).energy;
+        results.T = run_mp2(oovv, denom).T;
     }
 
     else if (config.scf == "UHF" || config.scf == "uhf") {
@@ -102,8 +80,8 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         auto moes = make_so_moes(scf.moes_a, scf.moes_b, scf.nao);
         auto denom = make_denom(moes, scf.noo, scf.nvo);
 
-        results.energy = mp2_energy(oovv, denom);
-        results.T = mp2_tensor(oovv, denom);
+        results.energy = run_mp2(oovv, denom).energy;
+        results.T = run_mp2(oovv, denom).T;
     }
     std::cout << "MP2 Energy: " << results.energy << " Eh" << std::endl;
     return results;
