@@ -49,3 +49,5 @@ cc_results CCSD(const scf_results& SCF, const mp2_results& MP2, const params& co
 real_t CCSD_T(const cc_results& ccResults, const moes& moes);
 
 #endif//P2_CC_H
+
+// EOF

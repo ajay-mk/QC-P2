@@ -10,17 +10,12 @@
 
 #include <Eigen/Eigenvalues>
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#include <libint2/chemistry/sto3g_atomic_density.h>
-#if !LIBINT2_CONSTEXPR_STATICS
-#  include <libint2/statics_definition.h>
-#endif
 // Include Headers
 #include "hf.h"
 
 
 // Function Definitions
+
 
 // Computing Nuclear Repulsion Energy
 double compute_enuc(const std::vector<libint2::Atom>& atoms) {
@@ -37,31 +32,19 @@ double compute_enuc(const std::vector<libint2::Atom>& atoms) {
     return num;
 }
 
-std::vector<size_t> map_shell_to_basis_function(const std::vector<libint2::Shell>& shells) {
-    std::vector<size_t> result;
-    result.reserve(shells.size());
-
-    size_t n = 0;
-    for (auto shell: shells) {
-        result.push_back(n);
-        n += shell.size();
-    }
-
-    return result;
-}
 // Integral engines are from the example: https://github.com/evaleev/libint/blob/master/tests/hartree-fock/hartree-fock.cc
 
-Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells, libint2::Operator obtype, const std::vector<libint2::Atom>& atoms)
+Matrix compute_1body_ints(const libint2::BasisSet& obs, libint2::Operator obtype, const std::vector<libint2::Atom>& atoms)
 {
     using libint2::Shell;
     using libint2::Engine;
     using libint2::Operator;
 
-    const auto n = nbasis(shells);
+    const auto n = nbasis(obs.shells());
     Matrix result(n,n);
 
     // construct the overlap integrals engine
-    Engine engine(obtype, max_nprim(shells), max_l(shells), 0);
+    Engine engine(obtype, obs.max_nprim(), obs.max_l(), 0);
     // nuclear attraction ints engine needs to know where the charges sit ...
     // the nuclei are charges in this case; in QM/MM there will also be classical charges
     if (obtype == Operator::nuclear) {
@@ -72,25 +55,25 @@ Matrix compute_1body_ints(const std::vector<libint2::Shell>& shells, libint2::Op
         engine.set_params(q);
     }
 
-    auto shell2bf = map_shell_to_basis_function(shells);
+    auto shell2bf = obs.shell2bf();
 
     // buf[0] points to the target shell set after every call  to engine.compute()
     const auto& buf = engine.results();
 
     // loop over unique shell pairs, {s1,s2} such that s1 >= s2
     // this is due to the permutational symmetry of the real integrals over Hermitian operators: (1|2) = (2|1)
-    for(auto s1=0; s1!=shells.size(); ++s1) {
+    for(auto s1=0; s1!=obs.shells().size(); ++s1) {
 
         auto bf1 = shell2bf[s1]; // first basis function in this shell
-        auto n1 = shells[s1].size();
+        auto n1 = obs.shells()[s1].size();
 
         for(auto s2=0; s2<=s1; ++s2) {
 
             auto bf2 = shell2bf[s2];
-            auto n2 = shells[s2].size();
+            auto n2 = obs.shells()[s2].size();
 
             // compute shell pair
-            engine.compute(shells[s1], shells[s2]);
+            engine.compute(obs.shells()[s1], obs.shells()[s2]);
 
             // "map" buffer to a const Eigen Matrix, and copy it to the corresponding blocks of the result
             Eigen::Map<const Matrix> buf_mat(buf[0], n1, n2);
@@ -139,19 +122,19 @@ Matrix density_guess(int nocc, int nao)
     return guess;
 }
 // Fock Builder
-Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D) {
+Matrix build_fock(const libint2::BasisSet &obs, const Matrix &D) {
 
     using libint2::Engine;
     using libint2::Operator;
     using libint2::Shell;
 
-    const auto n = nbasis(shells);
+    const auto n = nbasis(obs.shells());
     Matrix G = Matrix::Zero(n, n);
 
     // construct the 2-electron repulsion integrals engine
-    Engine engine(Operator::coulomb, max_nprim(shells), max_l(shells), 0);
+    Engine engine(Operator::coulomb, obs.max_nprim(), obs.max_l(), 0);
 
-    auto shell2bf = map_shell_to_basis_function(shells);
+    auto shell2bf = obs.shell2bf();
 
     const auto &buf = engine.results();
 
@@ -182,26 +165,26 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D) {
     // (ab|cd) contributes. STOP READING and try to figure it out yourself. (to check your answer see below)
 
     // loop over permutationally-unique set of shells
-    for (auto s1 = 0; s1 != shells.size(); ++s1) {
+    for (auto s1 = 0; s1 != obs.shells().size(); ++s1) {
 
         auto bf1_first = shell2bf[s1];// first basis function in this shell
-        auto n1 = shells[s1].size();  // number of basis functions in this shell
+        auto n1 = obs.shells()[s1].size();  // number of basis functions in this shell
 
         for (auto s2 = 0; s2 <= s1; ++s2) {
 
             auto bf2_first = shell2bf[s2];
-            auto n2 = shells[s2].size();
+            auto n2 = obs.shells()[s2].size();
 
             for (auto s3 = 0; s3 <= s1; ++s3) {
 
                 auto bf3_first = shell2bf[s3];
-                auto n3 = shells[s3].size();
+                auto n3 = obs.shells()[s3].size();
 
                 const auto s4_max = (s1 == s3) ? s2 : s3;
                 for (auto s4 = 0; s4 <= s4_max; ++s4) {
 
                     auto bf4_first = shell2bf[s4];
-                    auto n4 = shells[s4].size();
+                    auto n4 = obs.shells()[s4].size();
 
                     // compute the permutational degeneracy (i.e. # of equivalents) of the given shell set
                     auto s12_deg = (s1 == s2) ? 1.0 : 2.0;
@@ -209,7 +192,7 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D) {
                     auto s12_34_deg = (s1 == s3) ? (s2 == s4 ? 1.0 : 2.0) : 2.0;
                     auto s1234_deg = s12_deg * s34_deg * s12_34_deg;
 
-                    engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
+                    engine.compute(obs.shells()[s1], obs.shells()[s2], obs.shells()[s3], obs.shells()[s4]);
                     const auto *buf_1234 = buf[0];
                     if (buf_1234 == nullptr)
                         continue;// if all integrals screened out, skip to next quartet
@@ -258,44 +241,44 @@ Matrix build_fock(const std::vector<libint2::Shell> &shells, const Matrix &D) {
     return 0.5 * (G + Gt);
 }
 
-Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D, const Matrix &Ds) {
+Matrix build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D, const Matrix &Ds) {
 
     using libint2::Engine;
     using libint2::Operator;
     using libint2::Shell;
 
-    const auto n = nbasis(shells);
+    const auto n = nbasis(obs.shells());
     Matrix G = Matrix::Zero(n, n);
 
     // construct the 2-electron repulsion integrals engine
-    Engine engine(Operator::coulomb, max_nprim(shells), max_l(shells), 0);
+    Engine engine(Operator::coulomb, obs.max_nprim(), obs.max_l(), 0);
 
-    auto shell2bf = map_shell_to_basis_function(shells);
+    auto shell2bf = obs.shell2bf();
 
     const auto &buf = engine.results();
 
 
     // loop over permutationally-unique set of shells
-    for (auto s1 = 0; s1 != shells.size(); ++s1) {
+    for (auto s1 = 0; s1 != obs.shells().size(); ++s1) {
 
         auto bf1_first = shell2bf[s1];// first basis function in this shell
-        auto n1 = shells[s1].size();  // number of basis functions in this shell
+        auto n1 = obs.shells()[s1].size();  // number of basis functions in this shell
 
         for (auto s2 = 0; s2 <= s1; ++s2) {
 
             auto bf2_first = shell2bf[s2];
-            auto n2 = shells[s2].size();
+            auto n2 = obs.shells()[s2].size();
 
             for (auto s3 = 0; s3 <= s1; ++s3) {
 
                 auto bf3_first = shell2bf[s3];
-                auto n3 = shells[s3].size();
+                auto n3 = obs.shells()[s3].size();
 
                 const auto s4_max = (s1 == s3) ? s2 : s3;
                 for (auto s4 = 0; s4 <= s4_max; ++s4) {
 
                     auto bf4_first = shell2bf[s4];
-                    auto n4 = shells[s4].size();
+                    auto n4 = obs.shells()[s4].size();
 
                     // compute the permutational degeneracy (i.e. # of equivalents) of the given shell set
                     auto s12_deg = (s1 == s2) ? 1.0 : 2.0;
@@ -303,7 +286,7 @@ Matrix build_uhf_fock(const std::vector<libint2::Shell> &shells, const Matrix &D
                     auto s12_34_deg = (s1 == s3) ? (s2 == s4 ? 1.0 : 2.0) : 2.0;
                     auto s1234_deg = s12_deg * s34_deg * s12_34_deg;
 
-                    engine.compute(shells[s1], shells[s2], shells[s3], shells[s4]);
+                    engine.compute(obs.shells()[s1], obs.shells()[s2], obs.shells()[s3], obs.shells()[s4]);
                     const auto *buf_1234 = buf[0];
                     if (buf_1234 == nullptr)
                         continue;// if all integrals screened out, skip to next quartet
@@ -361,7 +344,7 @@ real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , co
 
 }
 
-scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config)
+scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nelectron, params config)
 {
     std::cout << std::endl
               << "Starting RHF calculation" << std::endl;
@@ -369,30 +352,30 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     auto enuc = compute_enuc(atoms);
 //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
     auto ndocc = nelectron/2;
+    results.nao = nbasis(obs.shells());
 
     // Occupied and Virtual Orbitals
-    results.noo = 2 * (nelectron/2);
-    results.nvo = (2 * nao) - results.noo;
+    results.no = 2 * (nelectron/2);
+    results.nv = (2 * results.nao) - results.no;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << results.noo << std::endl
-              << "Number of virtual orbitals: " << results.nvo << std::endl;
-    results.nao = nao;
+              << "Number of occupied orbitals: " << results.no << std::endl
+              << "Number of virtual orbitals: " << results.nv << std::endl;
 
     // Initializing Libint
     libint2::initialize();
 
     // Overlap Integrals
-    auto S = compute_1body_ints(obs.shells(), libint2::Operator::overlap);
+    auto S = compute_1body_ints(obs, libint2::Operator::overlap);
 //    std::cout << "\nOverlap Integrals:\n";
 //    std::cout << S << std::endl;
 
     // Kinetic Energy Integrals
-    auto T = compute_1body_ints(obs.shells(), libint2::Operator::kinetic);
+    auto T = compute_1body_ints(obs, libint2::Operator::kinetic);
 //    std::cout << "\nKinetic-Energy Integrals:\n";
 //    std::cout << T << std::endl;
 
     // Nuclear Attraction Integrals
-    Matrix V = compute_1body_ints(obs.shells(), libint2::Operator::nuclear, atoms);
+    Matrix V = compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
 //    std::cout << "\nNuclear Attraction Integrals:\n";
 //    std::cout << V << std::endl;
 
@@ -416,7 +399,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
         //D = H;
         std::cout << std::endl
              << "Building initial guess" << std::endl;
-        D = density_guess(ndocc, nao);
+        D = density_guess(ndocc, results.nao);
     }
 
 //    std::cout << "\nInitial Density Matrix:\n";
@@ -482,7 +465,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 
-scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nao, real_t nelectron, params config){
+scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nelectron, params config){
     scf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1)/2;
     results.nalpha = results.nbeta + config.multiplicity - 1;
@@ -491,13 +474,13 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
               << "Number of alpha electrons: " << results.nalpha << std::endl
               << "Number of beta electrons: " << results.nbeta << std::endl;
 
+    results.nao = nbasis(obs.shells());
     // Occupied and Virtual Orbitals
-    results.noo = 2 * (nelectron/2);
-    results.nvo = (2 * nao) - results.noo;
+    results.no = 2 * (nelectron/2);
+    results.nv = (2 * results.nao) - results.no;
     std::cout << std::endl
-              << "Number of occupied orbitals: " << results.noo << std::endl
-              << "Number of virtual orbitals: " << results.nvo << std::endl;
-    results.nao = nao;
+              << "Number of occupied orbitals: " << results.no << std::endl
+              << "Number of virtual orbitals: " << results.nv << std::endl;
 
     std::cout << std::endl
               << "Starting UHF calculation" << std::endl;
@@ -508,17 +491,17 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     libint2::initialize();
 
     // Overlap Integrals
-    auto S = compute_1body_ints(obs.shells(), libint2::Operator::overlap);
+    auto S = compute_1body_ints(obs, libint2::Operator::overlap);
     //    std::cout << "\nOverlap Integrals:\n";
     //    std::cout << S << std::endl;
 
     // Kinetic Energy Integrals
-    auto T = compute_1body_ints(obs.shells(), libint2::Operator::kinetic);
+    auto T = compute_1body_ints(obs, libint2::Operator::kinetic);
     //    std::cout << "\nKinetic-Energy Integrals:\n";
     //    std::cout << T << std::endl;
 
     // Nuclear Attraction Integrals
-    Matrix V = compute_1body_ints(obs.shells(), libint2::Operator::nuclear, atoms);
+    Matrix V = compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
     //    std::cout << "\nNuclear Attraction Integrals:\n";
     //    std::cout << V << std::endl;
 
@@ -532,8 +515,8 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     V.resize(0, 0);
 
     // Building Initial Densities
-    Matrix Dalpha = density_guess(results.nalpha, nao);
-    Matrix Dbeta = density_guess(results.nbeta, nao);
+    Matrix Dalpha = density_guess(results.nalpha, results.nao);
+    Matrix Dbeta = density_guess(results.nbeta, results.nao);
     Matrix D = Dalpha + Dbeta; // Total Density Matrix
 
 

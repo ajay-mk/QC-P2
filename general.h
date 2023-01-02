@@ -28,9 +28,9 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> M
 struct params {
     std::string inputfile;
     std::string type;
-    std::string scf;
+    std::string ref;
     std::string basis;
-    double multiplicity;
+    int multiplicity;
     int maxiter;
     real_t conv;
 };
