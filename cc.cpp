@@ -21,29 +21,6 @@ int_struct get_integrals(const scf_results& SCF, const mp2_results& MP2){
     return output;
 }
 
-// MOEs in SO basis
-DTensor make_F_spin_rhf(const Vector &eps, const int& nao) {
-    auto n = nao * 2;
-    DTensor F_spin(n, n);
-    F_spin.fill(0.0);
-    for (auto i = 0; i < n; i++) {
-        F_spin(i, i) = eps(i / 2);
-    }
-    return F_spin;
-}
-
-DTensor make_F_spin_uhf(const Vector& eps_a, const Vector& eps_b, const int& nao){
-    auto n = nao * 2;
-    DTensor eps_so(n, n);
-    for (auto i = 0; i < n; i++){
-        if (i%2 == 0)
-            eps_so(i, i) = eps_a(i/2);
-        else if (i%2 == 1)
-            eps_so(i, i) = eps_b(i/2);
-    }
-    return eps_so;
-}
-
 DTensor make_fock(const Vector& eps1, const Vector& eps2, int n1, int n2){
     DTensor result(n2 - n1, n2 - n1);
     for (auto i = 0; i < n2-n1; i++){
@@ -122,6 +99,28 @@ DTensor make_D_ijab(const moes& moes){
     return D_ijab;
 }
 
+DTensor make_D_triples(const moes& moes){
+    auto no = moes.F_ia.extent(0);
+    auto nv = moes.F_ia.extent(1);
+    DTensor D_triples(no, no, no, nv, nv, nv);
+    D_triples.fill(0.0);
+    for (auto i = 0; i < no; i++){
+        for (auto j = 0; j < no; j++){
+            for (auto k = 0; k < no; k++){
+                for (auto a = 0; a < nv; a++){
+                    for (auto b = 0; b < nv; b++){
+                        for (auto c = 0; c < nv; c++){
+                            D_triples(i, j, k, a, b, c) = moes.F_ii(i, i) + moes.F_ii(j, j) + moes.F_ii(k, k)
+                                                          - moes.F_aa(a, a) - moes.F_aa(b, b) - moes.F_aa(c, c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return D_triples;
+}
+
 DTensor make_tau(const DTensor& Ts, const DTensor& Td){
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
@@ -172,7 +171,7 @@ DTensor multiply_Ts(const DTensor& Ts){
 
 // Intermediates Update
 cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
-                                      const int_struct& integrals, const DTensor& F_spin, const moes& moes){
+                                      const int_struct& integrals, const moes& moes){
     using btas::contract;
     cc_intermediates intermediates;
     auto no = Ts.extent(0);
@@ -252,7 +251,7 @@ cc_intermediates update_intermediates(const DTensor& Ts, const DTensor& Td,
 }
 
 DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integrals,
-                const cc_intermediates& intermediates, const DTensor& D_ia, const DTensor& F_spin){
+                const cc_intermediates& intermediates, const DTensor& D_ia, const moes& moes){
     using btas::contract;
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
@@ -269,7 +268,7 @@ DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integral
     DTensor moes_ia(no, nv);
     for (auto i = 0; i < no; i++){
         for (auto a = 0; a < nv; a++){
-            moes_ia(i, a) = F_spin(i, a);
+            moes_ia(i, a) = moes.F_ia(i, a);
         }
     }
     tempT1 += moes_ia;
@@ -286,7 +285,7 @@ DTensor make_T1(const DTensor& Ts, const DTensor& Td, const int_struct& integral
 }
 
 DTensor make_T2(const DTensor& Ts, const DTensor& Td, const int_struct& integrals,
-                const cc_intermediates& intermediates, const DTensor& D_ijab, const DTensor& F_spin){
+                const cc_intermediates& intermediates, const DTensor& D_ijab){
     using btas::contract;
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
@@ -390,12 +389,7 @@ real_t ccsd_energy(const DTensor& ts, const DTensor& td, const DTensor& oovv, co
 
 cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& config){
     cc_results results;
-    auto integrals = get_integrals(scf, mp2);
-    DTensor F_spin;
-    if (config.scf == "RHF")
-        F_spin = make_F_spin_rhf(scf.moes, scf.nao);
-    else if (config.scf == "UHF")
-        F_spin = make_F_spin_uhf(scf.moes_a, scf.moes_b, scf.nao); // Make changes for UHF
+    results.sliced_ints = get_integrals(scf, mp2);
 
     auto moes = make_moe_tensors(scf, config);
     auto D_ia = make_D_ia(moes);
@@ -413,27 +407,143 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
         if (iter == 0){
             std::cout << std::endl << "Iter         E_CC (Eh)        Delta(E_CC)" << std::endl;}
 
-        results.ccsd_energy = ccsd_energy(results.T1, results.T2, integrals.oovv, moes);
+        results.ccsd_energy = ccsd_energy(results.T1, results.T2, results.sliced_ints.oovv, moes);
         auto Del_E_CC = results.ccsd_energy - E_CC_last;
 
         E_CC_last = results.ccsd_energy;
 
         printf(" %02d %20.12f %20.12f\n", iter, results.ccsd_energy, Del_E_CC);
         if (abs(Del_E_CC) < config.conv){
-            break ;
+            break;
         }
         // Write code for updating intermediates
         //std::cout << "Updating intermediates" << std::endl;
-        cc_intermediates intermediates = update_intermediates(results.T1, results.T2, integrals, F_spin, moes);
+        cc_intermediates intermediates = update_intermediates(results.T1, results.T2, results.sliced_ints, moes);
 
         // Make T1 & T2
 
-        results.T1 = make_T1(results.T1, results.T2, integrals, intermediates, D_ia, F_spin);
+        results.T1 = make_T1(results.T1, results.T2, results.sliced_ints, intermediates, D_ia, moes);
         //std::cout << "T1 Updated" << std::endl;
-        results.T2 = make_T2(results.T1, results.T2, integrals, intermediates, D_ijab, F_spin);
+        results.T2 = make_T2(results.T1, results.T2, results.sliced_ints, intermediates, D_ijab);
         //std::cout << "T2 Updated" << std::endl;
 
     }
-    std::cout << std::endl;
+    //std::cout << results.T2 << std::endl;
+    std::cout << std::endl
+              << "CCSD energy: " << results.ccsd_energy << " Eh" << std::endl;
     return results;
+}
+// Equations from: https://github.com/CrawfordGroup/ProgrammingProjects/tree/master/Project%2306
+real_t CCSD_T(const cc_results& ccResults, const moes& moes){
+    using btas::contract;
+    auto integrals = ccResults.sliced_ints;
+    auto no = ccResults.T1.extent(0);
+    auto nv = ccResults.T1.extent(1);
+
+    auto D_triples = make_D_triples(moes);
+    enum{i, j , k, a, b, c, e, m};
+
+
+    // Disconnected triples
+//    DTensor tempTd(no, no, no, nv, nv, nv);
+//    contract(1.0, ccResults.T1, {i, a}, integrals.oovv, {j, k, b, c}, 1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {i, b}, integrals.oovv, {j, k, a, c}, -1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {i, c}, integrals.oovv, {j, k, b, a}, -1.0, tempTd, {i, j, k, a, b, c});
+//
+//    contract(1.0, ccResults.T1, {j, a}, integrals.oovv, {i, k, b, c}, -1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {j, b}, integrals.oovv, {i, k, a, c}, 1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {j, c}, integrals.oovv, {i, k, b, a}, 1.0, tempTd, {i, j, k, a, b, c});
+//
+//    contract(1.0, ccResults.T1, {k, a}, integrals.oovv, {j, i, b, c}, -1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {k, b}, integrals.oovv, {j, i, a, c}, -1.0, tempTd, {i, j, k, a, b, c});
+//    contract(1.0, ccResults.T1, {k, c}, integrals.oovv, {j, i, b, a}, -1.0, tempTd, {i, j, k, a, b, c});
+
+    DTensor dT(no, no, no, nv, nv, nv);
+    for (auto i = 0; i < no; i++){
+        for (auto j = 0; j < no; j++){
+            for (auto k = 0; k < no; k++){
+                for (auto a = 0; a < nv; a++){
+                    for (auto b = 0; b < nv; b++){
+                        for (auto c = 0; c < nv; c++){
+                            dT(i, j, k, a, b, c) += (ccResults.T1(i, a) * integrals.oovv(j, k, b, c)
+                                                    - ccResults.T1(i, b) * integrals.oovv(j, k, a, c)
+                                                    - ccResults.T1(i, c) * integrals.oovv(j, k, b, a)
+
+                                                    - ccResults.T1(j, a) * integrals.oovv(i, k, b, c)
+                                                    + ccResults.T1(j, b) * integrals.oovv(i, k, a, c)
+                                                    + ccResults.T1(j, c) * integrals.oovv(i, k, b, a)
+
+                                                    - ccResults.T1(k, a) * integrals.oovv(j, i, b, c)
+                                                    + ccResults.T1(k, b) * integrals.oovv(j, i, a, c)
+                                                    + ccResults.T1(k, c) * integrals.oovv(j, i, b, a))/D_triples(i, j, k, a, b, c);
+
+                            //dT(i, j, k, a, b, c) = tempTd(i, j, k, a, b, c)/D_triples(i, j, k, a, b, c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    //tempTd(0, 0, 0, 0, 0, 0);
+
+    // Connected triples - Split into two
+    DTensor tempTc(no, no, no, nv, nv, nv);
+    contract(1.0, ccResults.T2, {j, k, a, e}, integrals.vovv, {e, i, b, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {j, k, b, e}, integrals.vovv, {e, i, a, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {j, k, c, e}, integrals.vovv, {e, i, b, a}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    contract(-1.0, ccResults.T2, {i, k, a, e}, integrals.vovv, {e, j, b, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {i, k, b, e}, integrals.vovv, {e, j, a, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {i, k, c, e}, integrals.vovv, {e, j, b, a}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    contract(-1.0, ccResults.T2, {j, i, a, e}, integrals.vovv, {e, k, b, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {j, i, b, e}, integrals.vovv, {e, k, a, c}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {j, i, c, e}, integrals.vovv, {e, k, b, a}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    contract(-1.0, ccResults.T2, {i, m, b, c}, integrals.ovoo, {m, a, j, k}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {i, m, a, c}, integrals.ovoo, {m, b, j, k}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(1.0, ccResults.T2, {i, m, b, a}, integrals.ovoo, {m, c, j, k}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    contract(1.0, ccResults.T2, {j, m, b, c}, integrals.ovoo, {m, a, i, k}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {j, m, a, c}, integrals.ovoo, {m, b, i, k}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {j, m, b, a}, integrals.ovoo, {m, c, i, k}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    contract(1.0, ccResults.T2, {k, m, b, c}, integrals.ovoo, {m, a, j, i}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {k, m, a, c}, integrals.ovoo, {m, b, j, i}, 1.0, tempTc, {i, j, k, a, b, c});
+    contract(-1.0, ccResults.T2, {k, m, b, a}, integrals.ovoo, {m, c, j, i}, 1.0, tempTc, {i, j, k, a, b, c});
+
+    DTensor cT(no, no, no, nv, nv, nv);
+    for (auto i = 0; i < no; i++){
+        for (auto j = 0; j < no; j++){
+            for (auto k = 0; k < no; k++){
+                for (auto a = 0; a < nv; a++){
+                    for (auto b = 0; b < nv; b++){
+                        for (auto c = 0; c < nv; c++){
+                            cT(i, j, k, a, b, c) = tempTc(i, j, k, a, b, c)/D_triples(i, j, k, a, b, c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    tempTc(0, 0, 0, 0, 0, 0);
+    //std::cout << cT << std::endl;
+
+    real_t t_energy = 0.0;
+    for (auto i = 0; i < no; i++){
+        for (auto j = 0; j < no; j++){
+            for (auto k = 0; k < no; k++){
+                for (auto a = 0; a < nv; a++){
+                    for (auto b = 0; b < nv; b++){
+                        for (auto c = 0; c < nv; c++){
+                            t_energy += (1/36) * cT(i, j, k, a, b, c) * D_triples (i, j, k, a, b, c) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << "(T) energy: " << t_energy << " Eh" << std::endl;
+    return t_energy;
 }

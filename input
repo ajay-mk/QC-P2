@@ -1,7 +1,7 @@
 geom/water.xyz
-CCSD
+CCSD(T)
 RHF
-sto-3g
-2
+STO-3G
+1
 200
 1e-12
