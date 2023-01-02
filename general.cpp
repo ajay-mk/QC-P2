@@ -24,7 +24,7 @@ params read_config(const std::string& config_file){
     if (input.is_open()){
         input >> config.inputfile;
         input >> config.type;
-        input >> config.scf;
+        input >> config.ref;
         input >> config.basis;
         input >> config.multiplicity;
         input >> config.maxiter;

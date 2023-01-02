@@ -35,7 +35,7 @@ DTensor make_fock(const Vector& eps1, const Vector& eps2, int n1, int n2){
 moes make_moe_tensors(const scf_results& scf, const params& config){
     moes result;
 
-    if (config.scf == "RHF"){
+    if (config.ref == "RHF"){
         result.F = make_fock(scf.moes, scf.moes, 0, scf.no + scf.nv);
         result.F_ii = make_fock(scf.moes, scf.moes, 0, scf.no);
         result.F_aa = make_fock(scf.moes, scf.moes, scf.no, scf.no + scf.nv);
@@ -48,7 +48,7 @@ moes make_moe_tensors(const scf_results& scf, const params& config){
         result.F_ia = F_ia;
     }
 
-    if (config.scf == "UHF"){
+    if (config.ref == "UHF"){
         result.F = make_fock(scf.moes_a, scf.moes_b, 0, scf.no + scf.nv);
         result.F_ii = make_fock(scf.moes_a, scf.moes_b, 0, scf.no);
 

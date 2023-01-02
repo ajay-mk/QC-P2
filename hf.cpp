@@ -10,12 +10,6 @@
 
 #include <Eigen/Eigenvalues>
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#include <libint2/chemistry/sto3g_atomic_density.h>
-#if !LIBINT2_CONSTEXPR_STATICS
-#  include <libint2/statics_definition.h>
-#endif
 // Include Headers
 #include "hf.h"
 

@@ -47,7 +47,7 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
     std::cout << std::endl
               << "Starting MP2 calculation" << std::endl
               << std::endl;
-    if (config.scf == "RHF" || config.scf == "rhf") {
+    if (config.ref == "RHF" || config.ref == "rhf") {
         // Calculating AO Integrals
         auto ao_ints = eri_ao_tensor(obs);
 
@@ -67,7 +67,7 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
         results.T = run_mp2(oovv, denom).T;
     }
 
-    else if (config.scf == "UHF" || config.scf == "uhf") {
+    else if (config.ref == "UHF" || config.ref == "uhf") {
         auto ao_ints = eri_ao_tensor(obs);
 
         auto mo_ints_aa = transform_ao_mo(ao_ints, scf.Ca, scf.Ca);

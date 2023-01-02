@@ -2,11 +2,6 @@
 #include <vector>
 #include <iomanip>
 
-// Libint Gaussian integrals library
-#include <libint2.hpp>
-#if !LIBINT2_CONSTEXPR_STATICS
-#include <libint2/statics_definition.h>
-#endif
 
 // Include Headers
 #include "general.h"
@@ -44,7 +39,7 @@ int main(int argc, char *argv[]) {
     auto nao = nbasis(obs.shells());
     cout << endl
          << "Method: " << config.type << endl
-         << "SCF Type: " << config.scf << endl
+         << "SCF Type: " << config.ref << endl
          << "Basis Set: " << config.basis << endl
          << "Number of basis functions = " << nao << endl;
 
@@ -59,9 +54,9 @@ int main(int argc, char *argv[]) {
     // MP2 Bracket
     else if(config.type == "MP2" || config.type == "mp2"){
         scf_results hf_result;
-        if (config.scf == "RHF" || config.scf == "rhf")
+        if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nao, nelectron, config);
-        else if (config.scf == "UHF" || config.scf == "UHF")
+        else if (config.ref == "UHF" || config.ref == "UHF")
             hf_result = UHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
 
@@ -71,9 +66,9 @@ int main(int argc, char *argv[]) {
     // Coupled Cluster Bracket
     else if(config.type == "CCSD" || config.type == "ccsd"){
         scf_results hf_result;
-        if (config.scf == "RHF" || config.scf == "rhf")
+        if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nao, nelectron, config);
-        else if (config.scf == "UHF" || config.scf == "UHF")
+        else if (config.ref == "UHF" || config.ref == "UHF")
             hf_result = UHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
         auto ccsd_result = CCSD(hf_result, mp2_result, config);
@@ -83,9 +78,9 @@ int main(int argc, char *argv[]) {
 
     else if(config.type == "CCSD(T)" || config.type == "ccsd(t)"){
         scf_results hf_result;
-        if (config.scf == "RHF" || config.scf == "rhf")
+        if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nao, nelectron, config);
-        else if (config.scf == "UHF" || config.scf == "UHF")
+        else if (config.ref == "UHF" || config.ref == "UHF")
             hf_result = UHF(atoms, obs, nao, nelectron, config);
         auto mp2_result = MP2(obs, hf_result, config);
         auto ccsd_result = CCSD(hf_result, mp2_result, config);
