@@ -423,9 +423,8 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 //    std::cout << D << std::endl;
 
     // SCF Loop
-    auto iter = 0;
-    real_t rmsd = 0.0;
-    real_t ediff = 0.0;
+    real_t rmsd;
+    real_t ediff;
     real_t ehf;
 
     for (auto iter = 1; iter < config.maxiter; iter++){
@@ -539,9 +538,8 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 
 
     // SCF Loop
-    auto iter = 0;
-    real_t rmsd = 0.0;
-    real_t ediff = 0.0;
+    real_t rmsd;
+    real_t ediff;
     real_t euhf;
 
     for (auto iter = 1; iter < config.maxiter; iter++){

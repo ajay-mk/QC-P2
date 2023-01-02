@@ -3,8 +3,10 @@
 #### Prerequisites
 - [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) 
 - [Libint](https://github.com/evaleev/libint)
+- [BTAS](https://github.com/ValeevGroup/BTAS)
 
 #### Features
 - Restricted Hartree-Fock
 - Unrestricted Hartree-Fock
-- Møller–Plesset Perturbation Theory (MP2) (For closed-shell and open-shell)
+- Second Order Møller–Plesset Perturbation Theory (MP2)
+- Coupled Cluster Singles and Doubles, Perturbative Triples (CCSD & CCSD(T))
