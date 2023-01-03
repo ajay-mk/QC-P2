@@ -402,7 +402,7 @@ cc_results CCSD(const scf_results& scf, const mp2_results& mp2, const params& co
         E_CC_last = results.ccsd_energy;
 
         printf(" %02d %20.12f %20.12f\n", iter, results.ccsd_energy, Del_E_CC);
-        if (abs(Del_E_CC) < config.conv){
+        if (abs(Del_E_CC) < config.cc_conv){
             std::cout << "CC energy converged" << std::endl;
             break;
         }

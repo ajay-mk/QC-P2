@@ -23,7 +23,8 @@ int main(int argc, char *argv[]) {
     using libint2::BasisSet;
 
     // Reading geometry and config from input files
-    auto config = read_config(argv[1]);
+    //auto dummy = read_config(argv[1]);
+    auto config = read_config_json(argv[1]);
     std::vector<libint2::Atom> atoms = read_geometry(config.inputfile);
 
     // Counting the number of electrons
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]) {
         auto moes = make_moe_tensors(hf_result, config);
         auto t_energy = CCSD_T(ccsd_result, moes);
 
-        cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy + t_energy<< " Eh" << endl;
+        cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy + t_energy << " Eh" << endl;
 
     }
     // Other Methods

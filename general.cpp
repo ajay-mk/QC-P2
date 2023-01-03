@@ -8,28 +8,72 @@
 #include "general.h"
 
 // Function Definitions
-///TODO: Dictionary type construct for config
-params read_config(const std::string& config_file){
+
+//params read_config(const std::string& config_file){
+//    std::cout << std::endl
+//              << "Reading configuration from " << config_file << std::endl;
+//    params config;
+//    // Expected Format of Config File
+//    // Input Geometry
+//    // Method
+//    // Basis Set
+//    // Multiplicity
+//    // SCF Max. Iter.
+//    // SCF Conv
+//    std::ifstream input (config_file);
+//    if (input.is_open()){
+//        input >> config.inputfile;
+//        input >> config.type;
+//        input >> config.ref;
+//        input >> config.basis;
+//        input >> config.multiplicity;
+//        input >> config.maxiter;
+//        input >> config.conv;
+//    }
+//
+//    return config;
+//}
+
+params read_config_json(const std::string& config_file){
+    using nlohmann::json;
+
     std::cout << std::endl
               << "Reading configuration from " << config_file << std::endl;
     params config;
-    // Expected Format of Config File
-    // Input Geometry
-    // Method
-    // Basis Set
-    // Multiplicity
-    // SCF Max. Iter.
-    // SCF Conv
-    std::ifstream input (config_file);
-    if (input.is_open()){
-        input >> config.inputfile;
-        input >> config.type;
-        input >> config.ref;
-        input >> config.basis;
-        input >> config.multiplicity;
-        input >> config.maxiter;
-        input >> config.conv;
-    }
+
+    json input;
+    std::ifstream stream (config_file);
+    stream >> input;
+
+    // Required Parameters
+    //TODO: Throw error if the below parameters are empty
+    config.inputfile = input["filename"];
+    config.type = input["type"];
+    config.basis = input["basis"];
+    config.maxiter = input["maxiter"];
+    config.scf_conv = input["scf_conv"];
+
+    // Optional Parameters
+    // If some parameters are empty
+    if (input["ref"].empty())
+        config.ref = "RHF";
+    else
+        config.ref = input["ref"];
+
+    if (input["charge"].empty())
+            config.charge = 0;
+    else
+        config.charge = input["charge"];
+
+    if (input["multiplicity"].empty())
+        config.multiplicity = 1;
+    else
+        config.multiplicity = input["multiplicity"];
+
+    if (input["cc_conv"].empty())
+        config.cc_conv = input["scf_conv"];
+    else
+        config.cc_conv = input["cc_conv"];
 
     return config;
 }

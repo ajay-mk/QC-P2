@@ -446,7 +446,7 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
 
-        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+        if ( fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv ){
             results.energy = ehf + enuc;
             results.D = D;
             results.F = F;
@@ -564,7 +564,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
 
-        if ( fabs(ediff) < config.conv && fabs(rmsd) < config.conv ){
+        if ( fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv ){
             results.energy = euhf + enuc;
             results.D = D;
             results.Fa = Falpha;
