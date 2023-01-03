@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <vector>
+#include "ext/json.hpp"
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
@@ -30,14 +31,17 @@ struct params {
     std::string type;
     std::string ref;
     std::string basis;
+    int charge;
     int multiplicity;
     int maxiter;
-    real_t conv;
+    real_t scf_conv;
+    real_t cc_conv;
 };
 
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
-params read_config(const std::string& config_file);
+//params read_config(const std::string& config_file);
+params read_config_json(const std::string& config_file);
 size_t nbasis(const std::vector<libint2::Shell>& shells);
 
 #endif//P2_GENERAL_H
