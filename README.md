@@ -4,7 +4,7 @@
 - [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) 
 - [Libint](https://github.com/evaleev/libint)
 - [BTAS](https://github.com/ValeevGroup/BTAS)\
-- - [nlohmann/json](https://github.com/nlohmann/json) - For reading JSON input
+- [nlohmann/json](https://github.com/nlohmann/json) - For reading JSON input
 
 #### Features
 - Restricted Hartree-Fock
