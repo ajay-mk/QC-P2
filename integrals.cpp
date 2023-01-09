@@ -8,10 +8,10 @@
 // Function Definitons
 
 // Integral engines are from the example: https://github.com/evaleev/libint/blob/master/tests/hartree-fock/hartree-fock.cc
-DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
-    using libint2::Shell;
+DTensor eri_ao_tensor(const libint2::BasisSet &obs) {
     using libint2::Engine;
     using libint2::Operator;
+    using libint2::Shell;
 
     const auto n = nbasis(obs.shells());
     DTensor ao_ints(n, n, n, n);
@@ -76,7 +76,6 @@ DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
                                     ao_ints(bf3, bf4, bf1, bf2) = value;
                                     ao_ints(bf4, bf3, bf1, bf2) = value;
                                     ao_ints(bf4, bf3, bf2, bf1) = value;
-
                                 }
                             }
                         }
@@ -92,39 +91,46 @@ DTensor eri_ao_tensor(const libint2::BasisSet& obs) {
 // AO to MO transformation function : (pq|rs) --> (ia|jb) in Chemist's notation
 // <pr|qs> --> (ij|ab) in Dirac notation
 
-DTensor transform_ao_mo(const DTensor& pq_rs, const Matrix& Coeff1, const Matrix& Coeff2){
+DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix &Coeff2) {
     using btas::contract;
     DTensor ia_jb;
     const int n = pq_rs.extent(0);
 
     DTensor Ca(n, n);
     DTensor Cb(n, n);
-    for (auto a = 0; a < n; a++){
-        for (auto b = 0; b < n; b++){
+    for (auto a = 0; a < n; a++) {
+        for (auto b = 0; b < n; b++) {
             Ca(a, b) = Coeff1(a, b);
             Cb(a, b) = Coeff2(a, b);
         }
     }
     // Tensor Contractions
     DTensor pq_rl(n, n, n, n), pq_kl(n, n, n, n), pj_kl(n, n, n, n), ij_kl(n, n, n, n);
-    enum {p, q, r, s, i, j, k, l};
+    enum { p,
+           q,
+           r,
+           s,
+           i,
+           j,
+           k,
+           l };
     // sum{s} C_{s}^{b} (pq|rs)
     contract(1.0, pq_rs, {p, q, r, s}, Ca, {s, l}, 1.0, pq_rl, {p, q, r, l});
     // sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))
     contract(1.0, pq_rl, {p, q, r, l}, Ca, {r, k}, 1.0, pq_kl, {p, q, k, l});
     // sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs)))
     //contract(1.0, pq_kl, {p, q, k, l}, Cb, {q, j}, 1.0, pj_kl, {p, j, k, l});
-    contract(1.0, Cb, {q, j}, pq_kl, {p, q, k, l}, 1.0,  pj_kl, {p, j, k, l});
+    contract(1.0, Cb, {q, j}, pq_kl, {p, q, k, l}, 1.0, pj_kl, {p, j, k, l});
     // sum{p} C_{p}^{i} (sum{q} C_{q}^{a} (sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))))
     //contract(1.0, pj_kl, {p, j, k, l}, Cb, {p, i}, 1.0, ij_kl, {i, j, k, l});
-    contract(1.0, Cb, {p, i}, pj_kl, {p, j, k, l},  1.0, ij_kl, {i, j, k, l});
+    contract(1.0, Cb, {p, i}, pj_kl, {p, j, k, l}, 1.0, ij_kl, {i, j, k, l});
 
     //don't need other three tensors anymore
-    pq_kl(0,0,0,0), pj_kl(0,0,0,0), pq_rl(0,0,0,0);
+    pq_kl(0, 0, 0, 0), pj_kl(0, 0, 0, 0), pq_rl(0, 0, 0, 0);
     return ij_kl;
 }
 
-DTensor transform_to_so(const DTensor& mo_ints_aa, const DTensor& mo_ints_bb, const DTensor& mo_ints_ab){
+DTensor transform_to_so(const DTensor &mo_ints_aa, const DTensor &mo_ints_bb, const DTensor &mo_ints_ab) {
     auto n = mo_ints_aa.extent(0) * 2;
     DTensor so_ints(n, n, n, n);
     for (auto i = 0; i < n; i++) {
@@ -155,12 +161,12 @@ DTensor transform_to_so(const DTensor& mo_ints_aa, const DTensor& mo_ints_bb, co
     return so_ints;
 }
 
-DTensor make_denom(const DTensor& F_spin, int no, int nv){
-    DTensor denom(no, no, nv, nv); // E_{ijab}
-    for (auto i = 0; i < no; i++){
-        for (auto j = 0; j < no; j++){
-            for (auto a = 0; a < nv; a++){
-                for (auto b = 0; b < nv; b++){
+DTensor make_denom(const DTensor &F_spin, int no, int nv) {
+    DTensor denom(no, no, nv, nv);// E_{ijab}
+    for (auto i = 0; i < no; i++) {
+        for (auto j = 0; j < no; j++) {
+            for (auto a = 0; a < nv; a++) {
+                for (auto b = 0; b < nv; b++) {
                     denom(i, j, a, b) = F_spin(i, i) + F_spin(j, j) - F_spin(no + a, no + a) - F_spin(no + b, no + b);
                 }
             }
@@ -170,24 +176,24 @@ DTensor make_denom(const DTensor& F_spin, int no, int nv){
 }
 
 
-DTensor slice_ints(const DTensor& so_ints, int no, int nv, std::string int_string){
+DTensor slice_ints(const DTensor &so_ints, int no, int nv, std::string int_string) {
     // For shape
-    auto n1 = (int_string[0]=='o')*no + (int_string[0]=='v')*nv;
-    auto n2 = (int_string[1]=='o')*no + (int_string[1]=='v')*nv;
-    auto n3 = (int_string[2]=='o')*no + (int_string[2]=='v')*nv;
-    auto n4 = (int_string[3]=='o')*no + (int_string[3]=='v')*nv;
+    auto n1 = (int_string[0] == 'o') * no + (int_string[0] == 'v') * nv;
+    auto n2 = (int_string[1] == 'o') * no + (int_string[1] == 'v') * nv;
+    auto n3 = (int_string[2] == 'o') * no + (int_string[2] == 'v') * nv;
+    auto n4 = (int_string[3] == 'o') * no + (int_string[3] == 'v') * nv;
 
-    auto m1 = (int_string[0]=='v')*no;
-    auto m2 = (int_string[1]=='v')*no;
-    auto m3 = (int_string[2]=='v')*no;
-    auto m4 = (int_string[3]=='v')*no;
+    auto m1 = (int_string[0] == 'v') * no;
+    auto m2 = (int_string[1] == 'v') * no;
+    auto m3 = (int_string[2] == 'v') * no;
+    auto m4 = (int_string[3] == 'v') * no;
 
     DTensor int_slice(n1, n2, n3, n4);
-    for (auto p = 0; p < n1; p++){
-        for (auto q = 0; q < n2; q++){
-            for (auto r = 0; r < n3; r++){
-                for (auto l = 0; l < n4; l++){
-                    int_slice(p, q, r, l) = so_ints(p+m1, q+m2, r+m3, l+m4);
+    for (auto p = 0; p < n1; p++) {
+        for (auto q = 0; q < n2; q++) {
+            for (auto r = 0; r < n3; r++) {
+                for (auto l = 0; l < n4; l++) {
+                    int_slice(p, q, r, l) = so_ints(p + m1, q + m2, r + m3, l + m4);
                 }
             }
         }
@@ -196,4 +202,3 @@ DTensor slice_ints(const DTensor& so_ints, int no, int nv, std::string int_strin
 }
 
 // EOF
-

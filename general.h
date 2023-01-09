@@ -7,9 +7,9 @@
 
 // Some general functions
 
+#include "ext/json.hpp"
 #include <iostream>
 #include <vector>
-#include "ext/json.hpp"
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
@@ -41,8 +41,8 @@ struct params {
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
 void print_geometry(const std::vector<libint2::Atom> &atoms);
 //params read_config(const std::string& config_file);
-params read_config_json(const std::string& config_file);
-size_t nbasis(const std::vector<libint2::Shell>& shells);
+params read_config_json(const std::string &config_file);
+size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 #endif//P2_GENERAL_H
 

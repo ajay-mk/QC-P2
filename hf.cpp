@@ -4,9 +4,9 @@
 //
 
 #include <iostream>
+#include <istream>
 #include <string>
 #include <vector>
-#include <istream>
 
 #include <Eigen/Eigenvalues>
 
@@ -18,7 +18,7 @@
 
 
 // Computing Nuclear Repulsion Energy
-double compute_enuc(const std::vector<libint2::Atom>& atoms) {
+double compute_enuc(const std::vector<libint2::Atom> &atoms) {
     auto num = 0.0;
     for (auto i = 0; i < atoms.size(); i++)
         for (auto j = i + 1; j < atoms.size(); j++) {
@@ -34,23 +34,22 @@ double compute_enuc(const std::vector<libint2::Atom>& atoms) {
 
 // Integral engines are from the example: https://github.com/evaleev/libint/blob/master/tests/hartree-fock/hartree-fock.cc
 
-Matrix compute_1body_ints(const libint2::BasisSet& obs, libint2::Operator obtype, const std::vector<libint2::Atom>& atoms)
-{
-    using libint2::Shell;
+Matrix compute_1body_ints(const libint2::BasisSet &obs, libint2::Operator obtype, const std::vector<libint2::Atom> &atoms) {
     using libint2::Engine;
     using libint2::Operator;
+    using libint2::Shell;
 
     const auto n = nbasis(obs.shells());
-    Matrix result(n,n);
+    Matrix result(n, n);
 
     // construct the overlap integrals engine
     Engine engine(obtype, obs.max_nprim(), obs.max_l(), 0);
     // nuclear attraction ints engine needs to know where the charges sit ...
     // the nuclei are charges in this case; in QM/MM there will also be classical charges
     if (obtype == Operator::nuclear) {
-        std::vector<std::pair<real_t,std::array<real_t,3>>> q;
-        for(const auto& atom : atoms) {
-            q.push_back( {static_cast<real_t>(atom.atomic_number), {{atom.x, atom.y, atom.z}}} );
+        std::vector<std::pair<real_t, std::array<real_t, 3>>> q;
+        for (const auto &atom: atoms) {
+            q.push_back({static_cast<real_t>(atom.atomic_number), {{atom.x, atom.y, atom.z}}});
         }
         engine.set_params(q);
     }
@@ -58,16 +57,16 @@ Matrix compute_1body_ints(const libint2::BasisSet& obs, libint2::Operator obtype
     auto shell2bf = obs.shell2bf();
 
     // buf[0] points to the target shell set after every call  to engine.compute()
-    const auto& buf = engine.results();
+    const auto &buf = engine.results();
 
     // loop over unique shell pairs, {s1,s2} such that s1 >= s2
     // this is due to the permutational symmetry of the real integrals over Hermitian operators: (1|2) = (2|1)
-    for(auto s1=0; s1!=obs.shells().size(); ++s1) {
+    for (auto s1 = 0; s1 != obs.shells().size(); ++s1) {
 
-        auto bf1 = shell2bf[s1]; // first basis function in this shell
+        auto bf1 = shell2bf[s1];// first basis function in this shell
         auto n1 = obs.shells()[s1].size();
 
-        for(auto s2=0; s2<=s1; ++s2) {
+        for (auto s2 = 0; s2 <= s1; ++s2) {
 
             auto bf2 = shell2bf[s2];
             auto n2 = obs.shells()[s2].size();
@@ -78,9 +77,8 @@ Matrix compute_1body_ints(const libint2::BasisSet& obs, libint2::Operator obtype
             // "map" buffer to a const Eigen Matrix, and copy it to the corresponding blocks of the result
             Eigen::Map<const Matrix> buf_mat(buf[0], n1, n2);
             result.block(bf1, bf2, n1, n2) = buf_mat;
-            if (s1 != s2) // if s1 >= s2, copy {s1,s2} to the corresponding {s2,s1} block, note the transpose!
+            if (s1 != s2)// if s1 >= s2, copy {s1,s2} to the corresponding {s2,s1} block, note the transpose!
                 result.block(bf2, bf1, n2, n1) = buf_mat.transpose();
-
         }
     }
     return result;
@@ -89,35 +87,34 @@ Matrix compute_1body_ints(const libint2::BasisSet& obs, libint2::Operator obtype
 
 //Computes Superposition-Of-Atomic-Densities guess for the molecular density matrix
 //in minimal basis; occupies subshells by smearing electrons evenly over the orbitals
-Matrix compute_soad(const std::vector<libint2::Atom>& atoms) {
+Matrix compute_soad(const std::vector<libint2::Atom> &atoms) {
     // compute number of atomic orbitals
     size_t nao = 0;
-    for (const auto& atom : atoms) {
+    for (const auto &atom: atoms) {
         const auto Z = atom.atomic_number;
         nao += libint2::sto3g_num_ao(Z);
     }
 
     // compute the minimal basis density
     Matrix D = Matrix::Zero(nao, nao);
-    size_t ao_offset = 0;  // first AO of this atom
-    for (const auto& atom : atoms) {
+    size_t ao_offset = 0;// first AO of this atom
+    for (const auto &atom: atoms) {
         const auto Z = atom.atomic_number;
-        const auto& occvec = libint2::sto3g_ao_occupation_vector(Z);
-        for(const auto& occ: occvec) {
+        const auto &occvec = libint2::sto3g_ao_occupation_vector(Z);
+        for (const auto &occ: occvec) {
             D(ao_offset, ao_offset) = occ;
             ++ao_offset;
         }
     }
 
-    return D * 0.5;  // we use densities normalized to # of electrons/2
+    return D * 0.5;// we use densities normalized to # of electrons/2
 }
 // SAD guess only works for STO-3G now, should fix this
 
 // Guessing Initial Density - Adds 1 as diagonal elements for all occupied electrons
-Matrix density_guess(int nocc, int nao)
-{
+Matrix density_guess(int nocc, int nao) {
     Matrix guess = Matrix::Zero(nao, nao);
-    for(int i= 0; i < nocc; i++)
+    for (int i = 0; i < nocc; i++)
         guess(i, i) = 1.0;
     return guess;
 }
@@ -167,8 +164,8 @@ Matrix build_fock(const libint2::BasisSet &obs, const Matrix &D) {
     // loop over permutationally-unique set of shells
     for (auto s1 = 0; s1 != obs.shells().size(); ++s1) {
 
-        auto bf1_first = shell2bf[s1];// first basis function in this shell
-        auto n1 = obs.shells()[s1].size();  // number of basis functions in this shell
+        auto bf1_first = shell2bf[s1];    // first basis function in this shell
+        auto n1 = obs.shells()[s1].size();// number of basis functions in this shell
 
         for (auto s2 = 0; s2 <= s1; ++s2) {
 
@@ -261,8 +258,8 @@ Matrix build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D, const Matri
     // loop over permutationally-unique set of shells
     for (auto s1 = 0; s1 != obs.shells().size(); ++s1) {
 
-        auto bf1_first = shell2bf[s1];// first basis function in this shell
-        auto n1 = obs.shells()[s1].size();  // number of basis functions in this shell
+        auto bf1_first = shell2bf[s1];    // first basis function in this shell
+        auto n1 = obs.shells()[s1].size();// number of basis functions in this shell
 
         for (auto s2 = 0; s2 <= s1; ++s2) {
 
@@ -325,8 +322,7 @@ Matrix build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D, const Matri
 }
 
 
-real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F)
-{
+real_t rhf_energy(const Matrix &D, const Matrix &H, const Matrix &F) {
     real_t energy = 0.0;
     for (auto i = 0; i < D.rows(); i++)
         for (auto j = 0; j < D.rows(); j++)
@@ -334,28 +330,25 @@ real_t rhf_energy(const Matrix& D, const Matrix& H, const Matrix& F)
     return energy;
 }
 
-real_t uhf_energy(const Matrix& D, const Matrix& Dalpha,const Matrix& Dbeta , const Matrix& H, const Matrix& Falpha, const Matrix& Fbeta)
-{
+real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta, const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta) {
     real_t energy = 0.0;
     for (auto i = 0; i < D.rows(); i++)
         for (auto j = 0; j < D.rows(); j++)
             energy += D(i, j) * H(i, j) + Dalpha(i, j) * Falpha(i, j) + Dbeta(i, j) * Fbeta(i, j);
     return 0.5 * energy;
-
 }
 
-scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nelectron, params config)
-{
+scf_results RHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
     std::cout << std::endl
               << "Starting RHF calculation" << std::endl;
     scf_results results;
     auto enuc = compute_enuc(atoms);
-//    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
-    auto ndocc = nelectron/2;
+    //    std::cout << "Nuclear repulsion energy = " << enuc << " Eh " << std::endl;
+    auto ndocc = nelectron / 2;
     results.nao = nbasis(obs.shells());
 
     // Occupied and Virtual Orbitals
-    results.no = 2 * (nelectron/2);
+    results.no = 2 * (nelectron / 2);
     results.nv = (2 * results.nao) - results.no;
     std::cout << std::endl
               << "Number of occupied orbitals: " << results.no << std::endl
@@ -366,23 +359,23 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 
     // Overlap Integrals
     auto S = compute_1body_ints(obs, libint2::Operator::overlap);
-//    std::cout << "\nOverlap Integrals:\n";
-//    std::cout << S << std::endl;
+    //    std::cout << "\nOverlap Integrals:\n";
+    //    std::cout << S << std::endl;
 
     // Kinetic Energy Integrals
     auto T = compute_1body_ints(obs, libint2::Operator::kinetic);
-//    std::cout << "\nKinetic-Energy Integrals:\n";
-//    std::cout << T << std::endl;
+    //    std::cout << "\nKinetic-Energy Integrals:\n";
+    //    std::cout << T << std::endl;
 
     // Nuclear Attraction Integrals
     Matrix V = compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
-//    std::cout << "\nNuclear Attraction Integrals:\n";
-//    std::cout << V << std::endl;
+    //    std::cout << "\nNuclear Attraction Integrals:\n";
+    //    std::cout << V << std::endl;
 
     // Core Hamiltonian = T + V
     Matrix H = T + V;
-//    std::cout << "\nCore Hamiltonian:\n";
-//    std::cout << H << std::endl;
+    //    std::cout << "\nCore Hamiltonian:\n";
+    //    std::cout << H << std::endl;
 
     // T and V no longer needed, free up the memory
     T.resize(0, 0);
@@ -392,25 +385,24 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     Matrix D_minbs = compute_soad(atoms);
     if (config.basis == "STO-3G") {
         std::cout << std::endl
-             << "Using SAD for initial guess" << std::endl;
+                  << "Using SAD for initial guess" << std::endl;
         D = D_minbs;
-    }
-    else {
+    } else {
         //D = H;
         std::cout << std::endl
-             << "Building initial guess" << std::endl;
+                  << "Building initial guess" << std::endl;
         D = density_guess(ndocc, results.nao);
     }
 
-//    std::cout << "\nInitial Density Matrix:\n";
-//    std::cout << D << std::endl;
+    //    std::cout << "\nInitial Density Matrix:\n";
+    //    std::cout << D << std::endl;
 
     // SCF Loop
     real_t rmsd;
     real_t ediff;
     real_t ehf;
 
-    for (auto iter = 1; iter < config.maxiter; iter++){
+    for (auto iter = 1; iter < config.maxiter; iter++) {
         // Save a copy of the energy and the density
         auto ehf_last = ehf;
         auto D_last = D;
@@ -446,17 +438,15 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf, ehf + enuc, ediff, rmsd);
 
-        if ( fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv ){
+        if (fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv) {
             results.energy = ehf + enuc;
             results.D = D;
             results.F = F;
             results.C = C;
             results.moes = eps;
             break;
-        }
-        else
-            continue ;
-
+        } else
+            continue;
     }
     std::cout << std::endl
               << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;
@@ -465,9 +455,9 @@ scf_results RHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     return results;
 }
 
-scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet& obs, real_t nelectron, params config){
+scf_results UHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
     scf_results results;
-    results.nbeta = (nelectron - config.multiplicity + 1)/2;
+    results.nbeta = (nelectron - config.multiplicity + 1) / 2;
     results.nalpha = results.nbeta + config.multiplicity - 1;
 
     std::cout << std::endl
@@ -476,7 +466,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
 
     results.nao = nbasis(obs.shells());
     // Occupied and Virtual Orbitals
-    results.no = 2 * (nelectron/2);
+    results.no = 2 * (nelectron / 2);
     results.nv = (2 * results.nao) - results.no;
     std::cout << std::endl
               << "Number of occupied orbitals: " << results.no << std::endl
@@ -517,7 +507,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     // Building Initial Densities
     Matrix Dalpha = density_guess(results.nalpha, results.nao);
     Matrix Dbeta = density_guess(results.nbeta, results.nao);
-    Matrix D = Dalpha + Dbeta; // Total Density Matrix
+    Matrix D = Dalpha + Dbeta;// Total Density Matrix
 
 
     // SCF Loop
@@ -525,7 +515,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
     real_t ediff;
     real_t euhf;
 
-    for (auto iter = 1; iter < config.maxiter; iter++){
+    for (auto iter = 1; iter < config.maxiter; iter++) {
         // Save copy of energy and density
         auto euhf_last = euhf;
         auto D_last = D;
@@ -564,7 +554,7 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             std::cout << "\n\n Iter        E(elec)              E(tot)               Delta(E)             RMS(D)\n";
         printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf, euhf + enuc, ediff, rmsd);
 
-        if ( fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv ){
+        if (fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv) {
             results.energy = euhf + enuc;
             results.D = D;
             results.Fa = Falpha;
@@ -574,10 +564,8 @@ scf_results UHF(const std::vector<libint2::Atom>& atoms, const libint2::BasisSet
             results.moes_a = eps_alpha;
             results.moes_b = eps_beta;
             break;
-        }
-        else
-            continue ;
-
+        } else
+            continue;
     }
     std::cout << std::endl
               << "Hartree-Fock Energy = " << results.energy << " Eh" << std::endl;

@@ -7,4 +7,5 @@
   "multiplicity": 1,
   "maxiter": 200,
   "scf_conv": 1e-12,
-  "cc_conv": 1e-12}
+  "cc_conv": 1e-12
+}

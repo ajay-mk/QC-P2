@@ -1,13 +1,13 @@
+#include <iomanip>
 #include <iostream>
 #include <vector>
-#include <iomanip>
 
 
 // Include Headers
+#include "cc.h"
 #include "general.h"
 #include "hf.h"
 #include "mp2.h"
-#include "cc.h"
 
 // Main
 int main(int argc, char *argv[]) {
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     // Counting the number of electrons
     auto nelectron = 0;
-    for (auto & atom : atoms)
+    for (auto &atom: atoms)
         nelectron += atom.atomic_number;
 
     print_geometry(atoms);
@@ -47,13 +47,13 @@ int main(int argc, char *argv[]) {
     // Main
 
     // HF Bracket
-    if(config.type == "RHF" || config.type == "rhf")
+    if (config.type == "RHF" || config.type == "rhf")
         auto hf_result = RHF(atoms, obs, nelectron, config);
-    else if(config.type == "UHF" || config.type == "uhf")
+    else if (config.type == "UHF" || config.type == "uhf")
         auto hf_result = UHF(atoms, obs, nelectron, config);
 
     // MP2 Bracket
-    else if(config.type == "MP2" || config.type == "mp2"){
+    else if (config.type == "MP2" || config.type == "mp2") {
         scf_results hf_result;
         if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nelectron, config);
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Coupled Cluster Bracket
-    else if(config.type == "CCSD" || config.type == "ccsd"){
+    else if (config.type == "CCSD" || config.type == "ccsd") {
         scf_results hf_result;
         if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nelectron, config);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
     }
 
-    else if(config.type == "CCSD(T)" || config.type == "ccsd(t)"){
+    else if (config.type == "CCSD(T)" || config.type == "ccsd(t)") {
         scf_results hf_result;
         if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nelectron, config);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
     }
     // Other Methods
-    else{
+    else {
         cout << endl
              << config.type << " is not a supported method" << endl;
     }

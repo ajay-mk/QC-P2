@@ -34,7 +34,7 @@
 //    return config;
 //}
 
-params read_config_json(const std::string& config_file){
+params read_config_json(const std::string &config_file) {
     using nlohmann::json;
 
     std::cout << std::endl
@@ -42,7 +42,7 @@ params read_config_json(const std::string& config_file){
     params config;
 
     json input;
-    std::ifstream stream (config_file);
+    std::ifstream stream(config_file);
     stream >> input;
 
     // Required Parameters
@@ -61,7 +61,7 @@ params read_config_json(const std::string& config_file){
         config.ref = input["ref"];
 
     if (input["charge"].empty())
-            config.charge = 0;
+        config.charge = 0;
     else
         config.charge = input["charge"];
 
@@ -79,33 +79,33 @@ params read_config_json(const std::string& config_file){
 }
 
 // Reading Geometry from input file
-std::vector<libint2::Atom> read_geometry(const std::string& filename) {
-    std::cout <<
-            std::endl << "Reading geometry from " << filename << std::endl;
+std::vector<libint2::Atom> read_geometry(const std::string &filename) {
+    std::cout << std::endl
+              << "Reading geometry from " << filename << std::endl;
     std::ifstream is(filename);
     assert(is.good());
 
     // check the extension: if .xyz, assume the standard XYZ format, otherwise throw an exception
-    if ( filename.rfind(".xyz") != std::string::npos)
+    if (filename.rfind(".xyz") != std::string::npos)
         return libint2::read_dotxyz(is);
     else
         throw std::invalid_argument("Only .xyz files are accepted as input");
 }
 // Printing Coordinates
-void print_geometry(const std::vector<libint2::Atom>& atoms){
+void print_geometry(const std::vector<libint2::Atom> &atoms) {
     std::cout << std::endl
               << "Geometry: " << std::endl;
-    for (auto i =0; i < atoms.size(); i++){
+    for (auto i = 0; i < atoms.size(); i++) {
         std::cout << atoms[i].atomic_number << " " << atoms[i].x << " " << atoms[i].y << " " << atoms[i].z
-                  <<std::endl;
+                  << std::endl;
     }
     std::cout << std::endl;
 }
 
 // Counting number of basis functions
-size_t nbasis(const std::vector<libint2::Shell>& shells) {
+size_t nbasis(const std::vector<libint2::Shell> &shells) {
     size_t n = 0;
-    for (const auto& shell: shells)
+    for (const auto &shell: shells)
         n += shell.size();
     return n;
 }

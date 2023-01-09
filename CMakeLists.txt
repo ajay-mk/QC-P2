@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 FetchContent_Declare(
         BTAS
-        GIT_REPOSITORY  https://github.com/ValeevGroup/btas.git
+        GIT_REPOSITORY https://github.com/ValeevGroup/btas.git
 )
 FetchContent_MakeAvailable(BTAS)
 FetchContent_GetProperties(BTAS
