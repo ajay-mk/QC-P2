@@ -1,6 +1,7 @@
 //
 // Created by Ajay Melekamburath on 12/2/22.
 //
+// Contains functions for dealing with AO, MO, and SO integrals
 
 #include "integrals.h"
 

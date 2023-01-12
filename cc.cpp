@@ -1,6 +1,7 @@
 //
 // Created by Ajay Melekamburath on 12/5/22.
 //
+// // Contains functions relevant to CCSD & CCSD(T)
 
 #include "cc.h"
 
