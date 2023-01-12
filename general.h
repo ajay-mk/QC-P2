@@ -7,7 +7,7 @@
 
 // Some general functions
 
-#include "ext/json.hpp"
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <vector>
 
