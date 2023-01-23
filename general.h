@@ -7,8 +7,8 @@
 
 // Some general functions
 
-#include <nlohmann/json.hpp>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 // Libint Gaussian integrals library
