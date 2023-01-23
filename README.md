@@ -1,7 +1,7 @@
 ### Quantum Chemistry Codes using C++
 
 #### Prerequisites
-- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) 
+- [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [Libint](https://github.com/evaleev/libint)
 - [BTAS](https://github.com/ValeevGroup/BTAS)
 - [nlohmann/json](https://github.com/nlohmann/json) - For reading JSON input
