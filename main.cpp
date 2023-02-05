@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
     using libint2::BasisSet;
 
     // Reading geometry and config from input files
-    //auto dummy = read_config(argv[1]);
     auto config = read_config_json(argv[1]);
     std::vector<libint2::Atom> atoms = read_geometry(config.inputfile);
 

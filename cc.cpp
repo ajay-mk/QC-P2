@@ -453,21 +453,6 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
            e,
            m };
 
-
-    // Disconnected triples
-    //    DTensor tempTd(no, no, no, nv, nv, nv);
-    //    contract(1.0, ccResults.T1, {i, a}, integrals.oovv, {j, k, b, c}, 1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {i, b}, integrals.oovv, {j, k, a, c}, -1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {i, c}, integrals.oovv, {j, k, b, a}, -1.0, tempTd, {i, j, k, a, b, c});
-    //
-    //    contract(1.0, ccResults.T1, {j, a}, integrals.oovv, {i, k, b, c}, -1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {j, b}, integrals.oovv, {i, k, a, c}, 1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {j, c}, integrals.oovv, {i, k, b, a}, 1.0, tempTd, {i, j, k, a, b, c});
-    //
-    //    contract(1.0, ccResults.T1, {k, a}, integrals.oovv, {j, i, b, c}, -1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {k, b}, integrals.oovv, {j, i, a, c}, -1.0, tempTd, {i, j, k, a, b, c});
-    //    contract(1.0, ccResults.T1, {k, c}, integrals.oovv, {j, i, b, a}, -1.0, tempTd, {i, j, k, a, b, c});
-
     DTensor dT(no, no, no, nv, nv, nv);
     for (auto i = 0; i < no; i++) {
         for (auto j = 0; j < no; j++) {
@@ -481,8 +466,6 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
 
                                                      - ccResults.T1(k, a) * integrals.oovv(j, i, b, c) + ccResults.T1(k, b) * integrals.oovv(j, i, a, c) + ccResults.T1(k, c) * integrals.oovv(j, i, b, a)) /
                                                     D_triples(i, j, k, a, b, c);
-
-                            //dT(i, j, k, a, b, c) = tempTd(i, j, k, a, b, c)/D_triples(i, j, k, a, b, c);
                         }
                     }
                 }

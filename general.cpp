@@ -9,31 +9,6 @@
 
 // Function Definitions
 
-//params read_config(const std::string& config_file){
-//    std::cout << std::endl
-//              << "Reading configuration from " << config_file << std::endl;
-//    params config;
-//    // Expected Format of Config File
-//    // Input Geometry
-//    // Method
-//    // Basis Set
-//    // Multiplicity
-//    // SCF Max. Iter.
-//    // SCF Conv
-//    std::ifstream input (config_file);
-//    if (input.is_open()){
-//        input >> config.inputfile;
-//        input >> config.type;
-//        input >> config.ref;
-//        input >> config.basis;
-//        input >> config.multiplicity;
-//        input >> config.maxiter;
-//        input >> config.conv;
-//    }
-//
-//    return config;
-//}
-
 params read_config_json(const std::string &config_file) {
     using nlohmann::json;
 
