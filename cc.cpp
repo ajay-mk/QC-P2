@@ -24,7 +24,7 @@ int_struct get_integrals(const scf_results &SCF, const mp2_results &MP2) {
 
 DTensor make_fock(const Vector &eps1, const Vector &eps2, int n1, int n2) {
     DTensor result(n2 - n1, n2 - n1);
-    for (auto i = 0; i < n2 - n1; i++) {
+    for (auto i = 0; i < n2 - n1; ++i) {
         if (n1 % 2 == 0)
             result(i, i) = (i % 2 == 0) * eps1(n1 / 2 + i / 2) + (i % 2 == 1) * eps2(n1 / 2 + i / 2);
         else if (n1 % 2 == 1)
@@ -41,8 +41,8 @@ moes make_moe_tensors(const scf_results &scf, const params &config) {
         result.F_ii = make_fock(scf.moes, scf.moes, 0, scf.no);
         result.F_aa = make_fock(scf.moes, scf.moes, scf.no, scf.no + scf.nv);
         DTensor F_ia(scf.no, scf.nv);
-        for (auto i = 0; i < scf.no; i++) {
-            for (auto a = 0; a < scf.nv; a++) {
+        for (auto i = 0; i < scf.no; ++i) {
+            for (auto a = 0; a < scf.nv; ++a) {
                 F_ia(i, a) = result.F(i, scf.no + a);
             }
         }
@@ -54,14 +54,14 @@ moes make_moe_tensors(const scf_results &scf, const params &config) {
         result.F_ii = make_fock(scf.moes_a, scf.moes_b, 0, scf.no);
 
         DTensor F_aa(scf.nv, scf.nv);
-        for (auto a = 0; a < scf.nv; a++) {
+        for (auto a = 0; a < scf.nv; ++a) {
             F_aa(a, a) = result.F(scf.no + a, scf.no + a);
         }
         result.F_aa = F_aa;
 
         DTensor F_ia(scf.no, scf.nv);
-        for (auto i = 0; i < scf.no; i++) {
-            for (auto a = 0; a < scf.nv; a++) {
+        for (auto i = 0; i < scf.no; ++i) {
+            for (auto a = 0; a < scf.nv; ++a) {
                 F_ia(i, a) = result.F(i, scf.no + a);
             }
         }
@@ -74,8 +74,8 @@ DTensor make_D_ia(const moes &moes) {
     auto no = moes.F_ii.extent(0);
     auto nv = moes.F_aa.extent(0);
     DTensor D_ia(no, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto a = 0; a < nv; a++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto a = 0; a < nv; ++a) {
             D_ia(i, a) = moes.F_ii(i, i) - moes.F_aa(a, a);
         }
     }
@@ -87,10 +87,10 @@ DTensor make_D_ijab(const moes &moes) {
     auto no = moes.F_ii.extent(0);
     auto nv = moes.F_aa.extent(0);
     DTensor D_ijab(no, no, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     D_ijab(i, j, a, b) = moes.F_ii(i, i) + moes.F_ii(j, j) - moes.F_aa(a, a) - moes.F_aa(b, b);
                 }
             }
@@ -104,12 +104,12 @@ DTensor make_D_triples(const moes &moes) {
     auto nv = moes.F_aa.extent(1);
     DTensor D_triples(no, no, no, nv, nv, nv);
     D_triples.fill(0.0);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto k = 0; k < no; k++) {
-                for (auto a = 0; a < nv; a++) {
-                    for (auto b = 0; b < nv; b++) {
-                        for (auto c = 0; c < nv; c++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto k = 0; k < no; ++k) {
+                for (auto a = 0; a < nv; ++a) {
+                    for (auto b = 0; b < nv; ++b) {
+                        for (auto c = 0; c < nv; ++c) {
                             D_triples(i, j, k, a, b, c) = moes.F_ii(i, i) + moes.F_ii(j, j) + moes.F_ii(k, k) - moes.F_aa(a, a) - moes.F_aa(b, b) - moes.F_aa(c, c);
                         }
                     }
@@ -124,10 +124,10 @@ DTensor make_tau(const DTensor &Ts, const DTensor &Td) {
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
     DTensor tau(no, no, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     tau(i, j, a, b) = Td(i, j, a, b) + Ts(i, a) * Ts(j, b) - Ts(i, b) * Ts(j, a);// Stanton Equation #9
                 }
             }
@@ -139,10 +139,10 @@ DTensor make_tau_bar(const DTensor &Ts, const DTensor &Td) {
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
     DTensor tau_bar(no, no, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     tau_bar(i, j, a, b) = Td(i, j, a, b) +
                                           0.5 * (Ts(i, a) * Ts(j, b) - Ts(i, b) * Ts(j, a));// Stanton Equation #10
                 }
@@ -156,10 +156,10 @@ DTensor multiply_Ts(const DTensor &Ts) {
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
     DTensor result(no, nv, no, nv);
-    for (auto j = 0; j < no; j++) {
+    for (auto j = 0; j < no; ++j) {
         for (auto n = 0; n < no; n++) {
             for (auto f = 0; f < nv; f++) {
-                for (auto b = 0; b < nv; b++) {
+                for (auto b = 0; b < nv; ++b) {
                     result(j, f, n, b) = Ts(j, f) * Ts(n, b);
                 }
             }
@@ -190,7 +190,7 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     contract(1.0, Ts, {m, f}, integrals.ovvv, {m, a, f, e}, 1.0, F_ae, {a, e});
     contract(-0.5, make_tau_bar(Ts, Td), {m, n, a, f}, integrals.oovv, {m, n, e, f}, 1.0, F_ae, {a, e});
 
-    for (auto a = 0; a < nv; a++) {
+    for (auto a = 0; a < nv; ++a) {
         for (auto e = 0; e < nv; e++) {
             F_ae(a, e) += (1 - (a == e)) * moes.F_aa(a, e);// First term of Equation #3
         }
@@ -204,7 +204,7 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     contract(0.5, make_tau_bar(Ts, Td), {i, n, e, f}, integrals.oovv, {m, n, e, f}, 1.0, F_mi, {m, i});
 
     for (auto m = 0; m < no; m++) {
-        for (auto i = 0; i < no; i++) {
+        for (auto i = 0; i < no; ++i) {
             F_mi(m, i) += (1 - (m == i)) * moes.F_ii(m, i);// First term of Equation #4
         }
     }
@@ -272,8 +272,8 @@ DTensor make_T1(const DTensor &Ts, const DTensor &Td, const int_struct &integral
 
     // Since Equation #1 is for t_ia * D_ia
     DTensor newT1(no, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto a = 0; a < nv; a++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto a = 0; a < nv; ++a) {
             newT1(i, a) = tempT1(i, a) / D_ia(i, a);
         }
     }
@@ -359,10 +359,10 @@ DTensor make_T2(const DTensor &Ts, const DTensor &Td, const int_struct &integral
 
     // Since Equation #2 is for t_ia * D_ijab
     DTensor newT2(no, no, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     newT2(i, j, a, b) = tempT2(i, j, a, b) / D_ijab(i, j, a, b);
                 }
             }
@@ -378,11 +378,11 @@ real_t ccsd_energy(const DTensor &ts, const DTensor &td, const DTensor &oovv, co
     real_t energy = 0;
     auto no = ts.extent(0);
     auto nv = ts.extent(1);
-    for (auto i = 0; i < no; i++) {
-        for (auto a = 0; a < nv; a++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto a = 0; a < nv; ++a) {
             energy += moes.F_ia(i, a) * ts(i, a);
-            for (auto j = 0; j < no; j++) {
-                for (auto b = 0; b < nv; b++) {
+            for (auto j = 0; j < no; ++j) {
+                for (auto b = 0; b < nv; ++b) {
                     energy += 0.25 * oovv(i, j, a, b) * td(i, j, a, b) + 0.5 * oovv(i, j, a, b) * ts(i, a) * ts(j, b);
                 }
             }
@@ -454,12 +454,12 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
            m };
 
     DTensor dT(no, no, no, nv, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto k = 0; k < no; k++) {
-                for (auto a = 0; a < nv; a++) {
-                    for (auto b = 0; b < nv; b++) {
-                        for (auto c = 0; c < nv; c++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto k = 0; k < no; ++k) {
+                for (auto a = 0; a < nv; ++a) {
+                    for (auto b = 0; b < nv; ++b) {
+                        for (auto c = 0; c < nv; ++c) {
                             dT(i, j, k, a, b, c) += (ccResults.T1(i, a) * integrals.oovv(j, k, b, c) - ccResults.T1(i, b) * integrals.oovv(j, k, a, c) - ccResults.T1(i, c) * integrals.oovv(j, k, b, a)
 
                                                      - ccResults.T1(j, a) * integrals.oovv(i, k, b, c) + ccResults.T1(j, b) * integrals.oovv(i, k, a, c) + ccResults.T1(j, c) * integrals.oovv(i, k, b, a)
@@ -501,12 +501,12 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
     contract(-1.0, ccResults.T2, {k, m, b, a}, integrals.ovoo, {m, c, j, i}, 1.0, tempTc, {i, j, k, a, b, c});
 
     DTensor cT(no, no, no, nv, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto k = 0; k < no; k++) {
-                for (auto a = 0; a < nv; a++) {
-                    for (auto b = 0; b < nv; b++) {
-                        for (auto c = 0; c < nv; c++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto k = 0; k < no; ++k) {
+                for (auto a = 0; a < nv; ++a) {
+                    for (auto b = 0; b < nv; ++b) {
+                        for (auto c = 0; c < nv; ++c) {
                             cT(i, j, k, a, b, c) = tempTc(i, j, k, a, b, c) / D_triples(i, j, k, a, b, c);
                         }
                     }
@@ -517,12 +517,12 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
     tempTc(0, 0, 0, 0, 0, 0);
 
     real_t val = 0.0;
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto k = 0; k < no; k++) {
-                for (auto a = 0; a < nv; a++) {
-                    for (auto b = 0; b < nv; b++) {
-                        for (auto c = 0; c < nv; c++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto k = 0; k < no; ++k) {
+                for (auto a = 0; a < nv; ++a) {
+                    for (auto b = 0; b < nv; ++b) {
+                        for (auto c = 0; c < nv; ++c) {
                             val += (cT(i, j, k, a, b, c) * D_triples(i, j, k, a, b, c)) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
                         }
                     }

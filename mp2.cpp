@@ -11,7 +11,7 @@
 DTensor make_so_moes(const Vector &eps_a, const Vector &eps_b, const int &nao) {
     auto n = nao * 2;
     DTensor eps_so(n, n);
-    for (auto i = 0; i < n; i++) {
+    for (auto i = 0; i < n; ++i) {
         if (i % 2 == 0)
             eps_so(i, i) = eps_a(i / 2);
         else if (i % 2 == 1)
@@ -26,10 +26,10 @@ mp2_output run_mp2(const DTensor &oovv, const DTensor &denom) {
     mp2_output output;
     real_t energy = 0.0;
     DTensor T(no, no, nv, nv);
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     T(i, j, a, b) = oovv(i, j, a, b) / denom(i, j, a, b);
                     energy += 0.25 * (oovv(i, j, a, b) * oovv(i, j, a, b)) / denom(i, j, a, b);
                 }
