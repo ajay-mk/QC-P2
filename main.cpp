@@ -74,9 +74,7 @@ int main(int argc, char *argv[]) {
         auto ccsd_result = CCSD(hf_result, mp2_result, config);
 
         cout << "Total energy: " << hf_result.energy + ccsd_result.ccsd_energy << " Eh" << endl;
-    }
-
-    else if (config.type == "CCSD(T)" || config.type == "ccsd(t)") {
+    } else if (config.type == "CCSD(T)" || config.type == "ccsd(t)") {
         scf_results hf_result;
         if (config.ref == "RHF" || config.ref == "rhf")
             hf_result = RHF(atoms, obs, nelectron, config);

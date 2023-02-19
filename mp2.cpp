@@ -65,9 +65,7 @@ mp2_results MP2(const libint2::BasisSet &obs, const scf_results &scf, const para
 
         results.energy = run_mp2(oovv, denom).energy;
         results.T = run_mp2(oovv, denom).T;
-    }
-
-    else if (config.ref == "UHF" || config.ref == "uhf") {
+    } else if (config.ref == "UHF" || config.ref == "uhf") {
         auto ao_ints = eri_ao_tensor(obs);
 
         auto mo_ints_aa = transform_ao_mo(ao_ints, scf.Ca, scf.Ca);

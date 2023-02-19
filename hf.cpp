@@ -34,7 +34,8 @@ double compute_enuc(const std::vector<libint2::Atom> &atoms) {
 
 // Integral engines are from the example: https://github.com/evaleev/libint/blob/master/tests/hartree-fock/hartree-fock.cc
 
-Matrix compute_1body_ints(const libint2::BasisSet &obs, libint2::Operator obtype, const std::vector<libint2::Atom> &atoms) {
+Matrix
+compute_1body_ints(const libint2::BasisSet &obs, libint2::Operator obtype, const std::vector<libint2::Atom> &atoms) {
     using libint2::Engine;
     using libint2::Operator;
     using libint2::Shell;
@@ -118,6 +119,7 @@ Matrix density_guess(int nocc, int nao) {
         guess(i, i) = 1.0;
     return guess;
 }
+
 // Fock Builder
 Matrix build_fock(const libint2::BasisSet &obs, const Matrix &D) {
 
@@ -330,7 +332,8 @@ real_t rhf_energy(const Matrix &D, const Matrix &H, const Matrix &F) {
     return energy;
 }
 
-real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta, const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta) {
+real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta, const Matrix &H, const Matrix &Falpha,
+                  const Matrix &Fbeta) {
     real_t energy = 0.0;
     for (auto i = 0; i < D.rows(); ++i)
         for (auto j = 0; j < D.rows(); ++j)
@@ -338,7 +341,8 @@ real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta, co
     return 0.5 * energy;
 }
 
-scf_results RHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
+scf_results
+RHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
     std::cout << std::endl
               << "Starting RHF calculation" << std::endl;
     scf_results results;
@@ -455,7 +459,8 @@ scf_results RHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet
     return results;
 }
 
-scf_results UHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
+scf_results
+UHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet &obs, real_t nelectron, params config) {
     scf_results results;
     results.nbeta = (nelectron - config.multiplicity + 1) / 2;
     results.nalpha = results.nbeta + config.multiplicity - 1;

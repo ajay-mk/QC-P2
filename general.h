@@ -13,6 +13,7 @@
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
+
 #if !LIBINT2_CONSTEXPR_STATICS
 #include <libint2/statics_definition.h>
 #endif
@@ -39,8 +40,11 @@ struct params {
 };
 
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
+
 void print_geometry(const std::vector<libint2::Atom> &atoms);
+
 params read_config_json(const std::string &config_file);
+
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 #endif//P2_GENERAL_H

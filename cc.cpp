@@ -110,7 +110,9 @@ DTensor make_D_triples(const moes &moes) {
                 for (auto a = 0; a < nv; ++a) {
                     for (auto b = 0; b < nv; ++b) {
                         for (auto c = 0; c < nv; ++c) {
-                            D_triples(i, j, k, a, b, c) = moes.F_ii(i, i) + moes.F_ii(j, j) + moes.F_ii(k, k) - moes.F_aa(a, a) - moes.F_aa(b, b) - moes.F_aa(c, c);
+                            D_triples(i, j, k, a, b, c) =
+                                    moes.F_ii(i, i) + moes.F_ii(j, j) + moes.F_ii(k, k) - moes.F_aa(a, a) -
+                                    moes.F_aa(b, b) - moes.F_aa(c, c);
                         }
                     }
                 }
@@ -135,6 +137,7 @@ DTensor make_tau(const DTensor &Ts, const DTensor &Td) {
     }
     return tau;
 }
+
 DTensor make_tau_bar(const DTensor &Ts, const DTensor &Td) {
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
@@ -175,14 +178,16 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     cc_intermediates intermediates;
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
-    enum { a,
-           b,
-           i,
-           j,
-           m,
-           n,
-           e,
-           f };
+    enum {
+        a,
+        b,
+        i,
+        j,
+        m,
+        n,
+        e,
+        f
+    };
 
     DTensor F_ae(nv, nv);// Stanton Equation #3
 
@@ -239,7 +244,8 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     DTensor W_mbej(no, nv, nv, no);// Stanton Equation #8
     contract(1.0, Ts, {j, f}, integrals.ovvv, {m, b, e, f}, 1.0, W_mbej, {m, b, e, j});
     contract(-1.0, Ts, {n, b}, integrals.oovo, {m, n, e, j}, 1.0, W_mbej, {m, b, e, j});
-    contract(-0.5, Td, {j, n, f, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej, {m, b, e, j});// Split last term into two
+    contract(-0.5, Td, {j, n, f, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej,
+             {m, b, e, j});// Split last term into two
     contract(-1.0, multiply_Ts(Ts), {j, f, n, b}, integrals.oovv, {m, n, e, f}, 1.0, W_mbej, {m, b, e, j});
     W_mbej += integrals.ovvo;// First term of Equation #8
 
@@ -253,12 +259,14 @@ DTensor make_T1(const DTensor &Ts, const DTensor &Td, const int_struct &integral
     using btas::contract;
     auto no = Ts.extent(0);
     auto nv = Ts.extent(1);
-    enum { a,
-           i,
-           m,
-           n,
-           e,
-           f };
+    enum {
+        a,
+        i,
+        m,
+        n,
+        e,
+        f
+    };
     DTensor tempT1(no, nv);
     // Stanton Equation #1
     contract(1.0, Ts, {i, e}, intermediates.F_ae, {a, e}, 1.0, tempT1, {i, a});
@@ -290,14 +298,16 @@ DTensor make_T2(const DTensor &Ts, const DTensor &Td, const int_struct &integral
     auto nv = Ts.extent(1);
 
     DTensor tempT2(no, no, nv, nv);
-    enum { a,
-           b,
-           i,
-           j,
-           m,
-           n,
-           e,
-           f };
+    enum {
+        a,
+        b,
+        i,
+        j,
+        m,
+        n,
+        e,
+        f
+    };
     // Stanton Equation #2
     tempT2 += integrals.oovv;// <ij||ab>
 
@@ -333,8 +343,10 @@ DTensor make_T2(const DTensor &Ts, const DTensor &Td, const int_struct &integral
     contract(0.5, Td, {j, m, a, b}, d2, {i, m}, 1.0, tempT2, {i, j, a, b});
 
 
-    contract(0.5, make_tau(Ts, Td), {m, n, a, b}, intermediates.W_mnij, {m, n, i, j}, 1.0, tempT2, {i, j, a, b});//4th term
-    contract(0.5, make_tau(Ts, Td), {i, j, e, f}, intermediates.W_abef, {a, b, e, f}, 1.0, tempT2, {i, j, a, b});//5th term
+    contract(0.5, make_tau(Ts, Td), {m, n, a, b}, intermediates.W_mnij, {m, n, i, j}, 1.0, tempT2,
+             {i, j, a, b});//4th term
+    contract(0.5, make_tau(Ts, Td), {i, j, e, f}, intermediates.W_abef, {a, b, e, f}, 1.0, tempT2,
+             {i, j, a, b});//5th term
 
 
     //6th term
@@ -437,6 +449,7 @@ cc_results CCSD(const scf_results &scf, const mp2_results &mp2, const params &co
               << "CCSD energy: " << results.ccsd_energy << " Eh" << std::endl;
     return results;
 }
+
 // Equations from: https://github.com/CrawfordGroup/ProgrammingProjects/tree/master/Project%2306
 real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
     using btas::contract;
@@ -445,14 +458,16 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
     auto nv = ccResults.T1.extent(1);
 
     auto D_triples = make_D_triples(moes);
-    enum { i,
-           j,
-           k,
-           a,
-           b,
-           c,
-           e,
-           m };
+    enum {
+        i,
+        j,
+        k,
+        a,
+        b,
+        c,
+        e,
+        m
+    };
 
     DTensor dT(no, no, no, nv, nv, nv);
     for (auto i = 0; i < no; ++i) {
@@ -461,11 +476,17 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
                 for (auto a = 0; a < nv; ++a) {
                     for (auto b = 0; b < nv; ++b) {
                         for (auto c = 0; c < nv; ++c) {
-                            dT(i, j, k, a, b, c) += (ccResults.T1(i, a) * integrals.oovv(j, k, b, c) - ccResults.T1(i, b) * integrals.oovv(j, k, a, c) - ccResults.T1(i, c) * integrals.oovv(j, k, b, a)
+                            dT(i, j, k, a, b, c) += (ccResults.T1(i, a) * integrals.oovv(j, k, b, c) -
+                                                     ccResults.T1(i, b) * integrals.oovv(j, k, a, c) -
+                                                     ccResults.T1(i, c) * integrals.oovv(j, k, b, a)
 
-                                                     - ccResults.T1(j, a) * integrals.oovv(i, k, b, c) + ccResults.T1(j, b) * integrals.oovv(i, k, a, c) + ccResults.T1(j, c) * integrals.oovv(i, k, b, a)
+                                                     - ccResults.T1(j, a) * integrals.oovv(i, k, b, c) +
+                                                     ccResults.T1(j, b) * integrals.oovv(i, k, a, c) +
+                                                     ccResults.T1(j, c) * integrals.oovv(i, k, b, a)
 
-                                                     - ccResults.T1(k, a) * integrals.oovv(j, i, b, c) + ccResults.T1(k, b) * integrals.oovv(j, i, a, c) + ccResults.T1(k, c) * integrals.oovv(j, i, b, a)) /
+                                                     - ccResults.T1(k, a) * integrals.oovv(j, i, b, c) +
+                                                     ccResults.T1(k, b) * integrals.oovv(j, i, a, c) +
+                                                     ccResults.T1(k, c) * integrals.oovv(j, i, b, a)) /
                                                     D_triples(i, j, k, a, b, c);
                         }
                     }
@@ -524,7 +545,8 @@ real_t CCSD_T(const cc_results &ccResults, const moes &moes) {
                 for (auto a = 0; a < nv; ++a) {
                     for (auto b = 0; b < nv; ++b) {
                         for (auto c = 0; c < nv; ++c) {
-                            val += (cT(i, j, k, a, b, c) * D_triples(i, j, k, a, b, c)) * (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
+                            val += (cT(i, j, k, a, b, c) * D_triples(i, j, k, a, b, c)) *
+                                   (cT(i, j, k, a, b, c) + dT(i, j, k, a, b, c));
                         }
                     }
                 }

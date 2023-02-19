@@ -107,14 +107,16 @@ DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix
     }
     // Tensor Contractions
     DTensor pq_rl(n, n, n, n), pq_kl(n, n, n, n), pj_kl(n, n, n, n), ij_kl(n, n, n, n);
-    enum { p,
-           q,
-           r,
-           s,
-           i,
-           j,
-           k,
-           l };
+    enum {
+        p,
+        q,
+        r,
+        s,
+        i,
+        j,
+        k,
+        l
+    };
     // sum{s} C_{s}^{b} (pq|rs)
     contract(1.0, pq_rs, {p, q, r, s}, Ca, {s, l}, 1.0, pq_rl, {p, q, r, l});
     // sum{r} C_{r}^{j} (sum{s} C_{s}^{b} (pq|rs))
@@ -139,10 +141,12 @@ DTensor transform_to_so(const DTensor &mo_ints_aa, const DTensor &mo_ints_bb, co
             for (auto k = 0; k < n; ++k) {
                 for (auto l = 0; l < n; ++l) {
                     if (i % 2 == 0 && k % 2 == 0 && j % 2 == 0 && l % 2 == 0)
-                        so_ints(i, j, k, l) = mo_ints_aa(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) - mo_ints_aa(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
+                        so_ints(i, j, k, l) = mo_ints_aa(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) -
+                                              mo_ints_aa(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
                     else if (i % 2 == 1 && k % 2 == 1 && j % 2 == 1 && l % 2 == 1)
-                        so_ints(i, j, k, l) = mo_ints_bb(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) - mo_ints_bb(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
+                        so_ints(i, j, k, l) = mo_ints_bb(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) -
+                                              mo_ints_bb(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
                     else if (i % 2 == 0 && k % 2 == 0 && j % 2 == 1 && l % 2 == 1)
                         so_ints(i, j, k, l) = mo_ints_ab(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2));
