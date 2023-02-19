@@ -99,8 +99,8 @@ DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix
 
     DTensor Ca(n, n);
     DTensor Cb(n, n);
-    for (auto a = 0; a < n; a++) {
-        for (auto b = 0; b < n; b++) {
+    for (auto a = 0; a < n; ++a) {
+        for (auto b = 0; b < n; ++b) {
             Ca(a, b) = Coeff1(a, b);
             Cb(a, b) = Coeff2(a, b);
         }
@@ -134,10 +134,10 @@ DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix
 DTensor transform_to_so(const DTensor &mo_ints_aa, const DTensor &mo_ints_bb, const DTensor &mo_ints_ab) {
     auto n = mo_ints_aa.extent(0) * 2;
     DTensor so_ints(n, n, n, n);
-    for (auto i = 0; i < n; i++) {
-        for (auto j = 0; j < n; j++) {
-            for (auto k = 0; k < n; k++) {
-                for (auto l = 0; l < n; l++) {
+    for (auto i = 0; i < n; ++i) {
+        for (auto j = 0; j < n; ++j) {
+            for (auto k = 0; k < n; ++k) {
+                for (auto l = 0; l < n; ++l) {
                     if (i % 2 == 0 && k % 2 == 0 && j % 2 == 0 && l % 2 == 0)
                         so_ints(i, j, k, l) = mo_ints_aa(floor(i / 2), floor(k / 2), floor(j / 2), floor(l / 2)) - mo_ints_aa(floor(j / 2), floor(k / 2), floor(i / 2), floor(l / 2));
 
@@ -164,10 +164,10 @@ DTensor transform_to_so(const DTensor &mo_ints_aa, const DTensor &mo_ints_bb, co
 
 DTensor make_denom(const DTensor &F_spin, int no, int nv) {
     DTensor denom(no, no, nv, nv);// E_{ijab}
-    for (auto i = 0; i < no; i++) {
-        for (auto j = 0; j < no; j++) {
-            for (auto a = 0; a < nv; a++) {
-                for (auto b = 0; b < nv; b++) {
+    for (auto i = 0; i < no; ++i) {
+        for (auto j = 0; j < no; ++j) {
+            for (auto a = 0; a < nv; ++a) {
+                for (auto b = 0; b < nv; ++b) {
                     denom(i, j, a, b) = F_spin(i, i) + F_spin(j, j) - F_spin(no + a, no + a) - F_spin(no + b, no + b);
                 }
             }
@@ -190,11 +190,11 @@ DTensor slice_ints(const DTensor &so_ints, int no, int nv, std::string int_strin
     auto m4 = (int_string[3] == 'v') * no;
 
     DTensor int_slice(n1, n2, n3, n4);
-    for (auto p = 0; p < n1; p++) {
-        for (auto q = 0; q < n2; q++) {
-            for (auto r = 0; r < n3; r++) {
-                for (auto l = 0; l < n4; l++) {
-                    int_slice(p, q, r, l) = so_ints(p + m1, q + m2, r + m3, l + m4);
+    for (auto p = 0; p < n1; ++p) {
+        for (auto q = 0; q < n2; ++q) {
+            for (auto r = 0; r < n3; ++r) {
+                for (auto s = 0; s < n4; ++s) {
+                    int_slice(p, q, r, s) = so_ints(p + m1, q + m2, r + m3, s + m4);
                 }
             }
         }
