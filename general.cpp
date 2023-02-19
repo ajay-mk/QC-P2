@@ -70,7 +70,7 @@ std::vector<libint2::Atom> read_geometry(const std::string &filename) {
 void print_geometry(const std::vector<libint2::Atom> &atoms) {
     std::cout << std::endl
               << "Geometry: " << std::endl;
-    for (auto i = 0; i < atoms.size(); i++) {
+    for (auto i = 0; i < atoms.size(); ++i) {
         std::cout << atoms[i].atomic_number << " " << atoms[i].x << " " << atoms[i].y << " " << atoms[i].z
                   << std::endl;
     }

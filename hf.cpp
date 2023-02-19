@@ -20,8 +20,8 @@
 // Computing Nuclear Repulsion Energy
 double compute_enuc(const std::vector<libint2::Atom> &atoms) {
     auto num = 0.0;
-    for (auto i = 0; i < atoms.size(); i++)
-        for (auto j = i + 1; j < atoms.size(); j++) {
+    for (auto i = 0; i < atoms.size(); ++i)
+        for (auto j = i + 1; j < atoms.size(); ++j) {
             auto xij = atoms[i].x - atoms[j].x;
             auto yij = atoms[i].y - atoms[j].y;
             auto zij = atoms[i].z - atoms[j].z;
@@ -114,7 +114,7 @@ Matrix compute_soad(const std::vector<libint2::Atom> &atoms) {
 // Guessing Initial Density - Adds 1 as diagonal elements for all occupied electrons
 Matrix density_guess(int nocc, int nao) {
     Matrix guess = Matrix::Zero(nao, nao);
-    for (int i = 0; i < nocc; i++)
+    for (int i = 0; i < nocc; ++i)
         guess(i, i) = 1.0;
     return guess;
 }
@@ -324,16 +324,16 @@ Matrix build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D, const Matri
 
 real_t rhf_energy(const Matrix &D, const Matrix &H, const Matrix &F) {
     real_t energy = 0.0;
-    for (auto i = 0; i < D.rows(); i++)
-        for (auto j = 0; j < D.rows(); j++)
+    for (auto i = 0; i < D.rows(); ++i)
+        for (auto j = 0; j < D.rows(); ++j)
             energy += D(i, j) * (H(i, j) + F(i, j));
     return energy;
 }
 
 real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta, const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta) {
     real_t energy = 0.0;
-    for (auto i = 0; i < D.rows(); i++)
-        for (auto j = 0; j < D.rows(); j++)
+    for (auto i = 0; i < D.rows(); ++i)
+        for (auto j = 0; j < D.rows(); ++j)
             energy += D(i, j) * H(i, j) + Dalpha(i, j) * Falpha(i, j) + Dbeta(i, j) * Fbeta(i, j);
     return 0.5 * energy;
 }
@@ -402,7 +402,7 @@ scf_results RHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet
     real_t ediff;
     real_t ehf;
 
-    for (auto iter = 1; iter < config.maxiter; iter++) {
+    for (auto iter = 1; iter < config.maxiter; ++iter) {
         // Save a copy of the energy and the density
         auto ehf_last = ehf;
         auto D_last = D;
@@ -515,7 +515,7 @@ scf_results UHF(const std::vector<libint2::Atom> &atoms, const libint2::BasisSet
     real_t ediff;
     real_t euhf;
 
-    for (auto iter = 1; iter < config.maxiter; iter++) {
+    for (auto iter = 1; iter < config.maxiter; ++iter) {
         // Save copy of energy and density
         auto euhf_last = euhf;
         auto D_last = D;
