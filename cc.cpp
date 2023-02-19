@@ -203,6 +203,7 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     contract(1.0, Ts, {n, e}, integrals.ooov, {m, n, i, e}, 1.0, F_mi, {m, i});
     contract(0.5, make_tau_bar(Ts, Td), {i, n, e, f}, integrals.oovv, {m, n, e, f}, 1.0, F_mi, {m, i});
 
+
     for (auto m = 0; m < no; ++m) {
         for (auto i = 0; i < no; ++i) {
             F_mi(m, i) += (1 - (m == i)) * moes.F_ii(m, i);// First term of Equation #4

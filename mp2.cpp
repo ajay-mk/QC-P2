@@ -11,7 +11,7 @@
 DTensor make_so_moes(const Vector &eps_a, const Vector &eps_b, const int &nao) {
     auto n = nao * 2;
     DTensor eps_so(n, n);
-    for (auto i = 0; i < n; i++) {
+    for (auto i = 0; i < n; ++i) {
         if (i % 2 == 0)
             eps_so(i, i) = eps_a(i / 2);
         else if (i % 2 == 1)
