@@ -100,7 +100,7 @@ DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix
     DTensor Ca(n, n);
     DTensor Cb(n, n);
     for (auto a = 0; a < n; ++a) {
-        for (auto b = 0; b < n; ++a) {
+        for (auto b = 0; b < n; ++b) {
             Ca(a, b) = Coeff1(a, b);
             Cb(a, b) = Coeff2(a, b);
         }

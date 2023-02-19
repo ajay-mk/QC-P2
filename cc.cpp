@@ -191,7 +191,7 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     contract(-0.5, make_tau_bar(Ts, Td), {m, n, a, f}, integrals.oovv, {m, n, e, f}, 1.0, F_ae, {a, e});
 
     for (auto a = 0; a < nv; ++a) {
-        for (auto e = 0; e < nv; e++) {
+        for (auto e = 0; e < nv; ++e) {
             F_ae(a, e) += (1 - (a == e)) * moes.F_aa(a, e);// First term of Equation #3
         }
     }
@@ -203,7 +203,8 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
     contract(1.0, Ts, {n, e}, integrals.ooov, {m, n, i, e}, 1.0, F_mi, {m, i});
     contract(0.5, make_tau_bar(Ts, Td), {i, n, e, f}, integrals.oovv, {m, n, e, f}, 1.0, F_mi, {m, i});
 
-    for (auto m = 0; m < no; m++) {
+
+    for (auto m = 0; m < no; ++m) {
         for (auto i = 0; i < no; ++i) {
             F_mi(m, i) += (1 - (m == i)) * moes.F_ii(m, i);// First term of Equation #4
         }
@@ -212,8 +213,8 @@ cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td,
 
     DTensor F_me(no, nv);// Stanton Equation #5
     contract(1.0, Ts, {n, f}, integrals.oovv, {m, n, e, f}, 1.0, F_me, {m, e});
-    for (auto m = 0; m < no; m++) {
-        for (auto e = 0; e < nv; e++) {
+    for (auto m = 0; m < no; ++m) {
+        for (auto e = 0; e < nv; ++e) {
             F_me(m, e) += moes.F_ia(m, e);// First term of Equation #5
         }
     }
@@ -410,7 +411,7 @@ cc_results CCSD(const scf_results &scf, const mp2_results &mp2, const params &co
     // Starting iterations
     real_t E_CC_last = 0.0;
     std::cout << "Starting CCSD Calculations" << std::endl;
-    for (auto iter = 0; iter < config.maxiter; iter++) {
+    for (auto iter = 0; iter < config.maxiter; ++iter) {
         if (iter == 0) {
             std::cout << std::endl
                       << "Iter         E_CC (Eh)        Delta(E_CC)" << std::endl;
