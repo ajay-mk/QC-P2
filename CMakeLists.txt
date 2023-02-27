@@ -25,8 +25,7 @@ FetchContent_MakeAvailable(json)
 #Libint2
 find_package(Libint2 REQUIRED)
 
-
-add_executable(P2 main.cpp hf.cpp mp2.cpp general.cpp general.h hf.h mp2.h integrals.cpp integrals.h cc.cpp cc.h)
+add_executable(P2 main.cpp src/hf.cpp src/mp2.cpp src/general.cpp src/general.h src/hf.h src/mp2.h src/integrals.cpp src/integrals.h src/cc.cpp src/cc.h)
 
 target_link_libraries(P2 BTAS)
 target_link_libraries(P2 nlohmann_json::nlohmann_json)

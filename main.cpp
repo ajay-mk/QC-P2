@@ -4,10 +4,10 @@
 
 
 // Include Headers
-#include "cc.h"
-#include "general.h"
-#include "hf.h"
-#include "mp2.h"
+#include "src/cc.h"
+#include "src/general.h"
+#include "src/hf.h"
+#include "src/mp2.h"
 
 // Main
 int main(int argc, char *argv[]) {
