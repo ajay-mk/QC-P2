@@ -66,6 +66,7 @@ std::vector<libint2::Atom> read_geometry(const std::string &filename) {
     else
         throw std::invalid_argument("Only .xyz files are accepted as input");
 }
+
 // Printing Coordinates
 void print_geometry(const std::vector<libint2::Atom> &atoms) {
     std::cout << std::endl

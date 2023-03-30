@@ -1,6 +1,6 @@
 {
   "filename": "geom/water.xyz",
-  "type": "CCSD(T)",
+  "type": "CCSD",
   "ref": "RHF",
   "basis": "sto-3g",
   "charge": 0,

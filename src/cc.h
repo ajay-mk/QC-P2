@@ -28,19 +28,25 @@ moes make_moe_tensors(const scf_results &scf, const params &config);
 DTensor make_fock(const Vector &eps1, const Vector &eps2, int n1, int n2);
 
 DTensor make_D_ia(const moes &moes);
+
 DTensor make_D_ijab(const moes &moes);
+
 DTensor make_D_triples(const moes &moes);
 
 DTensor make_tau(const DTensor &Ts, const DTensor &Td);
+
 DTensor make_tau_bar(const DTensor &Ts, const DTensor &Td);
+
 DTensor multiply_Ts(const DTensor &Ts);
 
 DTensor make_T1(const DTensor &Ts, const DTensor &Td, const int_struct &integrals,
                 const cc_intermediates &intermediates, const DTensor &D_ia, const moes &moes);
+
 DTensor make_T2(const DTensor &Ts, const DTensor &Td, const int_struct &integrals,
                 const cc_intermediates &intermediates, const DTensor &D_ijab);
 
-cc_intermediates update_intermediates(const DTensor &Ts, const DTensor &Td, const int_struct &integrals, const moes &moes);
+cc_intermediates
+update_intermediates(const DTensor &Ts, const DTensor &Td, const int_struct &integrals, const moes &moes);
 
 real_t ccsd_energy(const DTensor &ts, const DTensor &td, const DTensor &oovv, const moes &moes);
 

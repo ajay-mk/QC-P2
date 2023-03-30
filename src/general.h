@@ -7,12 +7,13 @@
 
 // Some general functions
 
+#include "nlohmann/json.hpp"
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <vector>
 
 // Libint Gaussian integrals library
 #include <libint2.hpp>
+
 #if !LIBINT2_CONSTEXPR_STATICS
 #include <libint2/statics_definition.h>
 #endif
@@ -23,7 +24,6 @@
 using real_t = libint2::scalar_type;
 typedef btas::Tensor<double> DTensor;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
-
 
 // Structs
 struct params {
@@ -39,8 +39,11 @@ struct params {
 };
 
 std::vector<libint2::Atom> read_geometry(const std::string &filename);
+
 void print_geometry(const std::vector<libint2::Atom> &atoms);
+
 params read_config_json(const std::string &config_file);
+
 size_t nbasis(const std::vector<libint2::Shell> &shells);
 
 #endif//P2_GENERAL_H
