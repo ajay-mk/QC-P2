@@ -25,7 +25,6 @@ using real_t = libint2::scalar_type;
 typedef btas::Tensor<double> DTensor;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Matrix;
 
-
 // Structs
 struct params {
     std::string inputfile;

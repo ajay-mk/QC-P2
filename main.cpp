@@ -12,7 +12,6 @@
 // Main
 int main(int argc, char *argv[]) {
 
-
     using std::cerr;
     using std::cout;
     using std::endl;

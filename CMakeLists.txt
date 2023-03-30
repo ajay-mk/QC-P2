@@ -27,6 +27,4 @@ find_package(Libint2 REQUIRED)
 
 add_executable(P2 main.cpp src/hf.cpp src/mp2.cpp src/general.cpp src/general.h src/hf.h src/mp2.h src/integrals.cpp src/integrals.h src/cc.cpp src/cc.h)
 
-target_link_libraries(P2 BTAS)
-target_link_libraries(P2 nlohmann_json::nlohmann_json)
-target_link_libraries(P2 Libint2::cxx)
+target_link_libraries(P2 Libint2::cxx BTAS nlohmann_json::nlohmann_json)
