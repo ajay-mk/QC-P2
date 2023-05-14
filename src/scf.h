@@ -26,9 +26,12 @@ class SCF {
   Matrix S, T, V, H;
   Matrix D, Dalpha, Dbeta;
   Matrix F, Falpha, Fbeta;
+  Matrix Calpha, Cbeta;
   double nuclear_repulsion;
 
-  /// @brief computes scf energy
+  /// @brief computes scf energy for RHF or UHF reference
+  /// @param atoms std::vector<libint2::Atom>
+  /// @param config config json object
   SCF(const std::vector<libint2::Atom> &atoms, const input &config) {
     utils::print_geometry(atoms);
     // Counting the number of electrons
@@ -129,24 +132,24 @@ class SCF {
         auto D_last = D;
 
         // New Fock Matrices
-        auto Falpha = H;
+        Falpha = H;
         Falpha += build_uhf_fock(obs.shells(), D, Dalpha);
-        auto Fbeta = H;
+        Fbeta = H;
         Fbeta += build_uhf_fock(obs.shells(), D, Dbeta);
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver1(Falpha, S);
         auto eps_alpha = solver1.eigenvalues();
-        auto C_alpha = solver1.eigenvectors();
+        Calpha = solver1.eigenvectors();
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver2(Fbeta, S);
         auto eps_beta = solver2.eigenvalues();
-        auto C_beta = solver2.eigenvectors();
+        Cbeta = solver2.eigenvectors();
 
         // Density Matrices
-        auto Ca_occ = C_alpha.leftCols(nalpha);
+        auto Ca_occ = Calpha.leftCols(nalpha);
         Dalpha = Ca_occ * Ca_occ.transpose();
 
-        auto Cb_occ = C_beta.leftCols(nbeta);
+        auto Cb_occ = Cbeta.leftCols(nbeta);
         Dbeta = Cb_occ * Cb_occ.transpose();
 
         D = Dalpha + Dbeta;

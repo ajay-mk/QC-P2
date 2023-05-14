@@ -10,8 +10,6 @@ std::vector<libint2::Atom> read_geometry(const std::string &filename) {
   std::ifstream is(filename);
   assert(is.good() && "Bad input file.");
 
-  // check the extension: if .xyz, assume the standard XYZ format, otherwise
-  // throw an exception
   if (filename.rfind(".xyz") != std::string::npos)
     return libint2::read_dotxyz(is);
   else
