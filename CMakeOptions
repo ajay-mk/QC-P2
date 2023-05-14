@@ -1,3 +1,0 @@
--DCMAKE_PREFIX_PATH=/Users/ajay/Code/libint/libint-install/lib/cmake/libint2
--DBUILD_SHARED_LIBS=ON
--DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld
