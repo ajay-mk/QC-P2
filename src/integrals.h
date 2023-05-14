@@ -1,38 +1,32 @@
 //
-// Created by Ajay Melekamburath on 12/2/22.
+// Created by Ajay Melekamburath on 5/14/23.
 //
 
-#ifndef P2_INTEGRALS_H
-#define P2_INTEGRALS_H
+#ifndef QC_INTEGRALS_H
+#define QC_INTEGRALS_H
 
-#include "general.h"
+#include "utils.h"
 
-// Structs
-struct int_struct {
-    DTensor oooo;
-    DTensor ovoo;
-    DTensor oovo;
-    DTensor ooov;
-    DTensor ovov;
-    DTensor ovvo;
-    DTensor oovv;
-    DTensor vovv;
-    DTensor ovvv;
-    DTensor vvvo;
-    DTensor vvvv;
-};
+// Libint Gaussian integrals library
+#include <libint2/chemistry/sto3g_atomic_density.h>
+#include <libint2.hpp>
 
+namespace qc::integrals {
 
-DTensor eri_ao_tensor(const libint2::BasisSet &obs);
+/// @brief computes nuclear-repulsion
+/// @param atoms std::vector<libint2::Atom>
+/// @return the energy
+double compute_enuc(const std::vector<libint2::Atom> &atoms);
 
-DTensor transform_ao_mo(const DTensor &pq_rs, const Matrix &Coeff1, const Matrix &Coeff2);
+/// @brief computes one-body integrals
+/// @param obs libint2::BasisSet object
+/// @param obtype libint2::Operator type {overlap, kinetic, nuclear}
+/// @param atoms std::vector<libint2::Atom>
+/// @return matrix of one-body integrals
+Matrix compute_1body_ints(const libint2::BasisSet &obs,
+                          libint2::Operator obtype,
+                          const std::vector<libint2::Atom> &atoms);
 
-DTensor make_denom(const DTensor &F_spin, int no, int nv);
+}  // namespace qc::integrals
 
-DTensor transform_to_so(const DTensor &mo_ints_aa, const DTensor &mo_ints_bb, const DTensor &mo_ints_ab);
-
-DTensor slice_ints(const DTensor &so_ints, int no, int nv, std::string int_string);
-
-#endif//P2_INTEGRALS_H
-
-// EOF
+#endif  // QC_INTEGRALS_H

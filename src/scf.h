@@ -12,4 +12,212 @@
 
 #include <Eigen/Eigenvalues>
 
+#include "integrals.h"
+#include "utils.h"
+
+namespace qc {
+
+class SCF {
+ protected:
+  int nao, nocc, nvir;  // these are in so basis
+ public:
+  int nelectron, nalpha, nbeta;
+  double scf_energy;
+  Matrix S, T, V, H;
+  Matrix D, Dalpha, Dbeta;
+  Matrix F, Falpha, Fbeta;
+  double nuclear_repulsion;
+
+  /// @brief computes scf energy
+  SCF(const std::vector<libint2::Atom> &atoms, const input &config) {
+    utils::print_geometry(atoms);
+    // Counting the number of electrons
+    nelectron = 0;
+    for (auto &atom : atoms) nelectron += atom.atomic_number;
+    std::cout << "\nNumber of electrons = " << nelectron << std::endl;
+    auto ndocc = nelectron / 2;
+    nuclear_repulsion = integrals::compute_enuc(atoms);
+
+    using libint2::BasisSet;
+
+    BasisSet obs(config.basis, atoms);
+    nao = utils::nbasis(obs.shells());
+    std::cout << "Number of basis functions = " << nao << std::endl;
+
+    // Occupied and Virtual Orbitals
+    nocc = 2 * (nelectron / 2);
+    nvir = (2 * nao) - nocc;
+    std::cout << "Number of occupied orbitals: " << nocc << std::endl
+              << "Number of virtual orbitals: " << nvir << std::endl;
+
+    std::cout << "\nStarting SCF calculation" << std::endl;
+    scf_energy = 0.0;  // initialize scf energy;
+
+    // Initializing Libint
+    libint2::initialize();
+
+    S = integrals::compute_1body_ints(obs, libint2::Operator::overlap, atoms);
+    T = integrals::compute_1body_ints(obs, libint2::Operator::kinetic, atoms);
+    V = integrals::compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
+
+    H = T + V;  // Core Hamiltonian = T + V
+
+    // T and V no longer needed, free up the memory
+    T.resize(0, 0);
+    V.resize(0, 0);
+
+    // from here, split the rhf and uhf stuff
+    if (config.ref == "RHF" || config.ref == "rhf") {
+      std::cout << "Reference: " << config.ref << std::endl;
+
+      D = (config.basis == "STO-3G" || config.basis == "sto-3g")
+              ? compute_soad(atoms)
+              : density_guess(nocc, nao);
+      // SCF Loop
+      real_t rmsd, ediff, ehf;
+
+      for (auto iter = 0; iter < config.maxiter;) {
+        ++iter;
+        auto ehf_last = ehf;
+        auto D_last = D;
+
+        F = H + build_rhf_fock(obs.shells(), D);
+
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver(F, S);
+        auto eps = solver.eigenvalues();
+        auto C = solver.eigenvectors();
+
+        auto C_occ = C.leftCols(ndocc);
+        D = C_occ * C_occ.transpose();
+
+        ehf = rhf_energy(D, H, F);
+
+        ediff = ehf - ehf_last;
+        rmsd = (D - D_last).norm();
+
+        if (iter == 1)
+          std::cout << "\nIter\tE(elec)\tE(tot)\tDelta(E)\tRMS(D)\n";
+        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, ehf,
+               ehf + nuclear_repulsion, ediff, rmsd);
+
+        if (fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv) {
+          break;
+        } else
+          continue;
+        if (iter >= config.maxiter) std::cout << "Iter > MaxIter" << std::endl;
+      }
+      scf_energy = ehf + nuclear_repulsion;
+    }  // RHF block
+
+    if (config.ref == "UHF" || config.ref == "uhf") {
+      std::cout << "Reference: " << config.ref << std::endl;
+      nbeta = (nelectron - config.multiplicity + 1) / 2;
+      nalpha = nbeta + config.multiplicity - 1;
+
+      std::cout << "Number of alpha electrons: " << nalpha << std::endl
+                << "Number of beta electrons: " << nbeta << std::endl;
+
+      Dalpha = density_guess(nalpha, nao);
+      Dbeta = density_guess(nbeta, nao);
+      D = Dalpha + Dbeta;  // Total Density Matrix
+      // SCF Loop
+      real_t rmsd, ediff, euhf;
+
+      for (auto iter = 0; iter < config.maxiter;) {
+        ++iter;
+        auto euhf_last = euhf;
+        auto D_last = D;
+
+        // New Fock Matrices
+        auto Falpha = H;
+        Falpha += build_uhf_fock(obs.shells(), D, Dalpha);
+        auto Fbeta = H;
+        Fbeta += build_uhf_fock(obs.shells(), D, Dbeta);
+
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver1(Falpha, S);
+        auto eps_alpha = solver1.eigenvalues();
+        auto C_alpha = solver1.eigenvectors();
+
+        Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver2(Fbeta, S);
+        auto eps_beta = solver2.eigenvalues();
+        auto C_beta = solver2.eigenvectors();
+
+        // Density Matrices
+        auto Ca_occ = C_alpha.leftCols(nalpha);
+        Dalpha = Ca_occ * Ca_occ.transpose();
+
+        auto Cb_occ = C_beta.leftCols(nbeta);
+        Dbeta = Cb_occ * Cb_occ.transpose();
+
+        D = Dalpha + Dbeta;
+
+        // UHF Energy
+        euhf = uhf_energy(D, Dalpha, Dbeta, H, Falpha, Fbeta);
+
+        // compute difference with last iteration
+        ediff = euhf - euhf_last;
+        rmsd = (D - D_last).norm();
+
+        if (iter == 1)
+          std::cout << "\n\n Iter        E(elec)              E(tot)           "
+                       "    Delta(E)             RMS(D)\n";
+        printf(" %02d %20.12f %20.12f %20.12f %20.12f\n", iter, euhf,
+               euhf + nuclear_repulsion, ediff, rmsd);
+        if (fabs(ediff) < config.scf_conv && fabs(rmsd) < config.scf_conv) {
+          break;
+        } else
+          continue;
+        if (iter >= config.maxiter) std::cout << "Iter > MaxIter" << std::endl;
+      }
+      scf_energy = euhf + nuclear_repulsion;
+    }  // UHF block
+  };
+
+  // Function declarations
+  /// @brief Computes Superposition-Of-Atomic-Densities guess for the molecular
+  /// density matrix in minimal basis; occupies subshells by smearing electrons
+  /// evenly over the orbitals
+  /// @param atoms std::vector<libint2::Atom>
+  /// @return matrix of initial density guess
+  Matrix compute_soad(const std::vector<libint2::Atom> &atoms);
+
+  /// @brief guess for initial density
+  /// adds 1 as diagonal elements for all occupied electrons
+  /// @param nocc number of occupied orbitals
+  /// @param nao number of atomic orbitals
+  static static Matrix density_guess(int nocc, int nao);
+
+  /// @brief computes fock matrix for RHF reference
+  /// @param obs libint2::BasisSet object
+  /// @param D density matrix
+  Matrix build_rhf_fock(const libint2::BasisSet &obs, const Matrix &D);
+
+  /// @brief computes fock matrix for UHF reference
+  /// @param obs libint2::BasisSet object
+  /// @param D density matrix
+  Matrix build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D,
+                        const Matrix &Ds);
+
+  /// @brief computes RHF energy
+  /// @param D density matrix
+  /// @param H Hamiltonian matrix
+  /// @param F fock matrix
+  /// @return returns energy
+  real_t rhf_energy(const Matrix &D, const Matrix &H, const Matrix &F);
+
+  /// @brief computes UHF energy
+  /// @param D initial density matrix
+  /// @param Dalpha density matrix - alpha spin
+  /// @param Dbeta density matrix - beta spin
+  /// @param H Hamiltonian matrix
+  /// @param Falpha fock matrix
+  /// @param Fbeta fock matrix
+  /// @return returns energy
+  real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta,
+                    const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta);
+
+};  // class SCF
+
+}  // namespace qc
+
 #endif  // QC_SCF_H

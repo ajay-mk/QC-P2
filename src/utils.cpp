@@ -63,6 +63,7 @@ input read_config(const std::string &config_file) {
   assert(config.cc_conv >= config.scf_conv &&
          "Requested CC convergence is higher than SCF convergence");
 
+  std::cout << input.dump(4) << std::endl;
   return config;
 }
 
