@@ -6,6 +6,12 @@
 
 namespace qc {
 
+Matrix SCF::density_guess(int nocc, int nao) {
+  Matrix result = Matrix::Zero(nao, nao);
+  for (int i = 0; i < nocc; ++i) result(i, i) = 1.0;
+  return result;
+}
+
 Matrix SCF::compute_soad(const std::vector<libint2::Atom> &atoms) {
   std::cout << "Using SOAD as initial guess" << std::endl;
   // compute number of atomic orbitals
@@ -25,13 +31,7 @@ Matrix SCF::compute_soad(const std::vector<libint2::Atom> &atoms) {
       ++ao_offset;
     }
   }
-  return D * 0.5;  // we use densities normalized to # of electrons/2
-}
-
-Matrix SCF::density_guess(int nocc, int nao) {
-  Matrix result = Matrix::Zero(nao, nao);
-  for (int i = 0; i < nocc; ++i) result(i, i) = 1.0;
-  return result;
+  return D * 0.5;
 }
 
 Matrix SCF::build_rhf_fock(const libint2::BasisSet &obs, const Matrix &D) {
