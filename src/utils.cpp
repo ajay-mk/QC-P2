@@ -6,7 +6,7 @@
 
 namespace qc::utils {
 std::vector<libint2::Atom> read_geometry(const std::string &filename) {
-  std::cout << "\nReading geometry from " << filename << std::endl;
+  std::cout << "Reading geometry from " << filename << std::endl;
   std::ifstream is(filename);
   assert(is.good() && "Bad input file.");
 
@@ -38,6 +38,7 @@ T read_json_item(const nlohmann::json &json, const std::string &key,
 
 input read_config(const std::string &config_file) {
   using nlohmann::json;
+  // TODO: Switch to Boost::json
   std::cout << "\nReading configuration from " << config_file << std::endl;
   input config;  // make the struct
   std::ifstream f(config_file);
@@ -46,7 +47,7 @@ input read_config(const std::string &config_file) {
   // new implementation
   config.geom_file = read_json_item<std::string>(input, "filename", "h2o.xyz");
   config.type = read_json_item<std::string>(input, "type", "RHF");
-  config.basis = read_json_item<std::string>(input, "basis", "3-21G");
+  config.basis = read_json_item<std::string>(input, "basis", "STO-3G");
   config.maxiter = read_json_item<int>(input, "maxiter", 50);
   config.scf_conv = read_json_item<double>(input, "scf_conv", 1e-8);
   config.cc_conv = read_json_item<double>(input, "cc_conv", config.scf_conv);
@@ -58,10 +59,18 @@ input read_config(const std::string &config_file) {
   assert(config.ref == "RHF" || config.ref == "rhf" || config.ref == "UHF" ||
          config.ref == "uhf" && "Unsupported reference in input");
 
-  assert(config.cc_conv >= config.scf_conv &&
-         "Requested CC convergence is higher than SCF convergence");
-
-  std::cout << input.dump(4) << std::endl;
+  // try and catch block for cc_conv <= scf_conv
+  try {
+    if (config.cc_conv <= config.scf_conv) {
+      throw std::invalid_argument(
+          "Warning: requested cc_conv is higher than scf_conv. "
+          "Setting cc_conv = scf_conv.");
+    }
+  } catch (const std::invalid_argument &e) {
+    std::cerr << e.what() << std::endl;
+    config.cc_conv = config.scf_conv;
+  }
+  std::cout << "Input JSON:\n" << input.dump(5) << std::endl;
   return config;
 }
 
