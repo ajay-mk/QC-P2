@@ -6,7 +6,7 @@
 
 namespace qc::integrals {
 
-double compute_enuc(const std::vector<libint2::Atom> &atoms) {
+real_t compute_enuc(const std::vector<libint2::Atom> &atoms) {
   auto num = 0.0;
   for (auto i = 0; i < atoms.size(); ++i)
     for (auto j = i + 1; j < atoms.size(); ++j) {

@@ -49,8 +49,8 @@ input read_config(const std::string &config_file) {
   config.type = read_json_item<std::string>(input, "type", "RHF");
   config.basis = read_json_item<std::string>(input, "basis", "STO-3G");
   config.maxiter = read_json_item<int>(input, "maxiter", 50);
-  config.scf_conv = read_json_item<double>(input, "scf_conv", 1e-8);
-  config.cc_conv = read_json_item<double>(input, "cc_conv", config.scf_conv);
+  config.scf_conv = read_json_item<real_t>(input, "scf_conv", 1e-8);
+  config.cc_conv = read_json_item<real_t>(input, "cc_conv", config.scf_conv);
   config.charge = read_json_item<int>(input, "charge", 0);
   config.multiplicity = read_json_item<int>(input, "multiplicity", 1);
 

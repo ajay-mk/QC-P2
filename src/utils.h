@@ -20,7 +20,7 @@
 
 // Typedefs
 using real_t = libint2::scalar_type;
-typedef btas::Tensor<double> DTensor;
+typedef btas::Tensor<real_t> Tensor;
 typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
     Matrix;
 

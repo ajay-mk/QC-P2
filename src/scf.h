@@ -22,12 +22,12 @@ class SCF {
   int nao, nocc, nvir;  // these are in so basis
  public:
   int nelectron, nalpha, nbeta;
-  double scf_energy;
+  real_t scf_energy;
   Matrix S, T, V, H;
   Matrix D, Dalpha, Dbeta;
   Matrix F, Falpha, Fbeta;
   Matrix Calpha, Cbeta;
-  double nuclear_repulsion;
+  real_t nuclear_repulsion;
 
   /// @brief computes scf energy for RHF or UHF reference
   /// @param atoms std::vector<libint2::Atom>

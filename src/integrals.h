@@ -16,7 +16,7 @@ namespace qc::integrals {
 /// @brief computes nuclear-repulsion
 /// @param atoms std::vector<libint2::Atom>
 /// @return the energy
-double compute_enuc(const std::vector<libint2::Atom> &atoms);
+real_t compute_enuc(const std::vector<libint2::Atom> &atoms);
 
 /// @brief computes one-body integrals
 /// @param obs libint2::BasisSet object
