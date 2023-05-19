@@ -27,6 +27,25 @@ Matrix compute_1body_ints(const libint2::BasisSet &obs,
                           libint2::Operator obtype,
                           const std::vector<libint2::Atom> &atoms);
 
+/// @brief computes ERIs in AO basis
+/// @param obs libint2::BasisSet object
+/// @return btas::Tensor of ERIs
+Tensor compute_ao_eri(const libint2::BasisSet &obs);
+
+/// @brief transforms ERIs to MO basis from AO basis
+/// @param eri ERI tensor
+/// @param coeffs coefficient matrix
+/// @return btas::Tensor of MO integrals
+Tensor transform_ao_to_mo(const Tensor &eri, const Matrix &coeffs);
+
+/// @brief transforms ERIs to MO basis from AO basis - used for UHF reference
+/// @param eri ERI tensor
+/// @param coeff_a coefficient matrix
+/// @param coeff_b coefficient matrix
+/// @return btas::Tensor of MO integrals
+Tensor transform_ao_to_mo(const Tensor &eri, const Matrix &coeff_a,
+                          const Matrix &coeff_b);
+
 }  // namespace qc::integrals
 
 #endif  // QC_INTEGRALS_H
