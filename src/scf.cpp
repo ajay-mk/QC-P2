@@ -6,6 +6,8 @@
 
 namespace qc {
 
+// SCF Class functions
+
 Matrix SCF::density_guess(int nocc, int nao) {
   Matrix result = Matrix::Zero(nao, nao);
   for (int i = 0; i < nocc; ++i) result(i, i) = 1.0;
@@ -39,7 +41,7 @@ Matrix SCF::build_rhf_fock(const libint2::BasisSet &obs, const Matrix &D) {
   using libint2::Operator;
   using libint2::Shell;
 
-  const auto n = utils::nbasis(obs.shells());
+  const auto n = qc::utils::nbasis(obs.shells());
   Matrix G = Matrix::Zero(n, n);
 
   // construct the 2-electron repulsion integrals engine
@@ -120,7 +122,7 @@ Matrix SCF::build_uhf_fock(const libint2::BasisSet &obs, const Matrix &D,
   using libint2::Operator;
   using libint2::Shell;
 
-  const auto n = utils::nbasis(obs.shells());
+  const auto n = qc::utils::nbasis(obs.shells());
   Matrix G = Matrix::Zero(n, n);
 
   // construct the 2-electron repulsion integrals engine

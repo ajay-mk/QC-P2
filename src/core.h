@@ -2,8 +2,8 @@
 // Created by Ajay Melekamburath on 5/13/23.
 //
 
-#ifndef QC_UTILS_H
-#define QC_UTILS_H
+#ifndef QC_CORE_H
+#define QC_CORE_H
 
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -36,8 +36,9 @@ struct input {
   real_t scf_conv;
   real_t cc_conv;
 };
+namespace qc {
 
-namespace qc::utils {
+namespace core {
 /// @brief reads geometry from .xyz files
 /// @param filename location and name of the input file
 /// @return std::vector<libint2::Atom>
@@ -61,10 +62,16 @@ void print_geometry(const std::vector<libint2::Atom> &atoms);
 /// @return input struct
 input read_config(const std::string &config_file);
 
+}  // namespace core
+
+namespace utils {
 /// @brief counts the number of basis functions
 /// @param shells std::vector<libint2::Shell> &shells
 /// @return number of basis functions
 size_t nbasis(const std::vector<libint2::Shell> &shells);
-}  // namespace qc::utils
 
-#endif  // QC_UTILS_H
+}  // namespace utils
+
+}  // namespace qc
+
+#endif  // QC_CORE_H

@@ -2,9 +2,9 @@
 // Created by Ajay Melekamburath on 5/13/23.
 //
 
-#include "utils.h"
+#include "core.h"
 
-namespace qc::utils {
+namespace qc::core {
 std::vector<libint2::Atom> read_geometry(const std::string &filename) {
   std::cout << "Reading geometry from " << filename << std::endl;
   std::ifstream is(filename);
@@ -21,12 +21,6 @@ void print_geometry(const std::vector<libint2::Atom> &atoms) {
   for (const auto &atom : atoms)
     std::cout << atom.atomic_number << " " << atom.x << " " << atom.y << " "
               << atom.z << std::endl;
-}
-
-size_t nbasis(const std::vector<libint2::Shell> &shells) {
-  size_t n = 0;
-  for (const auto &shell : shells) n += shell.size();
-  return n;
 }
 
 template <typename T>
@@ -74,4 +68,13 @@ input read_config(const std::string &config_file) {
   return config;
 }
 
+}  // namespace qc::core
+
+namespace qc::utils {
+
+size_t nbasis(const std::vector<libint2::Shell> &shells) {
+  size_t n = 0;
+  for (const auto &shell : shells) n += shell.size();
+  return n;
+}
 }  // namespace qc::utils

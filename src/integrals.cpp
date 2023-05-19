@@ -82,7 +82,7 @@ Tensor compute_ao_eri(const libint2::BasisSet &obs) {
   using libint2::Operator;
   using libint2::Shell;
 
-  const auto n = utils::nbasis(obs.shells());
+  const auto n = qc::utils::nbasis(obs.shells());
   Tensor ao_ints(n, n, n, n);
   ao_ints.fill(0.0);
 

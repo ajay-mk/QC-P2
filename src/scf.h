@@ -12,8 +12,8 @@
 
 #include <Eigen/Eigenvalues>
 
+#include "core.h"
 #include "integrals.h"
-#include "utils.h"
 
 namespace qc {
 
@@ -33,7 +33,7 @@ class SCF {
   /// @param atoms std::vector<libint2::Atom>
   /// @param config config json object
   SCF(const std::vector<libint2::Atom> &atoms, const input &config) {
-    utils::print_geometry(atoms);
+    core::print_geometry(atoms);
     // Counting the number of electrons
     nelectron = 0;
     for (auto &atom : atoms) nelectron += atom.atomic_number;
@@ -44,7 +44,7 @@ class SCF {
     using libint2::BasisSet;
 
     BasisSet obs(config.basis, atoms);
-    nao = utils::nbasis(obs.shells());
+    nao = qc::utils::nbasis(obs.shells());
     std::cout << "Number of basis functions = " << nao << std::endl;
 
     // Occupied and Virtual Orbitals
