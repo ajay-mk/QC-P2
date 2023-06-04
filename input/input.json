@@ -1,7 +1,7 @@
 {
   "filename": "/Users/ajay/Projects/P2/input/water.xyz",
   "type": "CCSD",
-  "ref": "RHF",
+  "ref": "rhf",
   "basis": "sto-3g",
   "charge": 0,
   "multiplicity": 1,

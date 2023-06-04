@@ -83,7 +83,7 @@ class SCF {
     V.resize(0, 0);
 
     // from here, split the rhf and uhf stuff
-    if (config.ref == "RHF" || config.ref == "rhf") {
+    if (config.ref == "RHF") {
       std::cout << "Reference: " << config.ref << std::endl;
 
       D = (config.basis == "STO-3G" || config.basis == "sto-3g")
@@ -128,7 +128,7 @@ class SCF {
       scf_energy = ehf + nuclear_repulsion;
     }  // RHF block
 
-    if (config.ref == "UHF" || config.ref == "uhf") {
+    if (config.ref == "UHF") {
       std::cout << "Reference: " << config.ref << std::endl;
       nbeta = (nelectron - config.multiplicity + 1) / 2;
       nalpha = nbeta + config.multiplicity - 1;

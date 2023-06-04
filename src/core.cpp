@@ -51,12 +51,14 @@ input read_config(const std::string &config_file) {
 
   // SCF
   config.ref = read_json_item<std::string>(input, "ref", "RHF");
-  assert(config.ref == "RHF" || config.ref == "rhf" || config.ref == "UHF" ||
-         config.ref == "uhf" && "Unsupported reference in input");
+  if (config.ref == "rhf") config.ref = "RHF";  // reassign
+  if (config.ref == "uhf") config.ref = "UHF";
+  assert((config.ref == "RHF" || config.ref == "UHF") &&
+         "Unsupported reference in input");
 
   // try and catch block for cc_conv <= scf_conv
   try {
-    if (config.cc_conv <= config.scf_conv) {
+    if (config.cc_conv < config.scf_conv) {
       throw std::invalid_argument(
           "Warning: requested cc_conv is higher than scf_conv. "
           "Setting cc_conv = scf_conv.");
