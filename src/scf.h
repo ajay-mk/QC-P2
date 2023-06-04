@@ -42,6 +42,7 @@ class SCF {
     nuclear_repulsion = integrals::compute_enuc(atoms);
 
     using libint2::BasisSet;
+    const auto verbose = config.verbose;  // additional printing
 
     BasisSet obs(config.basis, atoms);
     nao = qc::utils::nbasis(obs.shells());
@@ -62,8 +63,16 @@ class SCF {
     S = integrals::compute_1body_ints(obs, libint2::Operator::overlap, atoms);
     T = integrals::compute_1body_ints(obs, libint2::Operator::kinetic, atoms);
     V = integrals::compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
+    if (verbose) {
+      std::cout << "Overlap matrix: \n" << S << std::endl;
+      std::cout << "Kinetic energy matrix: \n" << T << std::endl;
+      std::cout << "Potential energy matrix: \n" << V << std::endl;
+    }
 
     H = T + V;  // Core Hamiltonian = T + V
+    if (verbose) {
+      std::cout << "Core Hamiltonian: \n" << H << std::endl;
+    }
 
     // T and V no longer needed, free up the memory
     T.resize(0, 0);
@@ -85,6 +94,9 @@ class SCF {
         auto D_last = D;
 
         F = H + build_rhf_fock(obs.shells(), D);
+        if (verbose && iter == 1) {
+          std::cout << "Initial Fock Matrix: \n" << F << std::endl;
+        }
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver(F, S);
         auto eps = solver.eigenvalues();
@@ -213,8 +225,8 @@ class SCF {
   /// @param Dalpha density matrix - alpha spin
   /// @param Dbeta density matrix - beta spin
   /// @param H Hamiltonian matrix
-  /// @param Falpha fock matrix
-  /// @param Fbeta fock matrix
+  /// @param Falpha fock matrix - alpha spin
+  /// @param Fbeta fock matrix - beta spin
   /// @return returns energy
   real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta,
                     const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta);

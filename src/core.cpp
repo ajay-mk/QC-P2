@@ -47,6 +47,7 @@ input read_config(const std::string &config_file) {
   config.cc_conv = read_json_item<real_t>(input, "cc_conv", config.scf_conv);
   config.charge = read_json_item<int>(input, "charge", 0);
   config.multiplicity = read_json_item<int>(input, "multiplicity", 1);
+  config.verbose = read_json_item<bool>(input, "verbose", false);
 
   // SCF
   config.ref = read_json_item<std::string>(input, "ref", "RHF");

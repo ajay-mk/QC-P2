@@ -16,6 +16,7 @@
 #include <libint2/statics_definition.h>
 #endif
 
+// BTAS Library for Tensor Algebra
 #include "btas/btas.h"
 
 // Typedefs
@@ -35,6 +36,7 @@ struct input {
   int maxiter;
   real_t scf_conv;
   real_t cc_conv;
+  bool verbose;
 };
 namespace qc {
 
