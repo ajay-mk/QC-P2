@@ -18,12 +18,16 @@
 namespace qc {
 
 class SCF {
- protected:
-  int nao, nocc, nvir;  // these are in so basis
- public:
-  int nelectron, nalpha, nbeta;
-  real_t scf_energy;
+ private:
   Matrix S, T, V, H;
+
+ protected:
+  int nelectron, nalpha, nbeta;
+  int nao, nocc, nvir;  // these are in so basis
+  libint2::BasisSet basis;
+
+ public:
+  real_t scf_energy;
   Matrix D, Dalpha, Dbeta;
   Matrix F, Falpha, Fbeta;
   Matrix Calpha, Cbeta;
@@ -44,8 +48,8 @@ class SCF {
     using libint2::BasisSet;
     const auto verbose = config.verbose;  // additional printing
 
-    BasisSet obs(config.basis, atoms);
-    nao = qc::utils::nbasis(obs.shells());
+    libint2::BasisSet basis(config.basis, atoms);
+    nao = qc::utils::nbasis(basis.shells());
     std::cout << "Number of basis functions = " << nao << std::endl;
 
     // Occupied and Virtual Orbitals
@@ -60,9 +64,9 @@ class SCF {
     // Initializing Libint
     libint2::initialize();
 
-    S = integrals::compute_1body_ints(obs, libint2::Operator::overlap, atoms);
-    T = integrals::compute_1body_ints(obs, libint2::Operator::kinetic, atoms);
-    V = integrals::compute_1body_ints(obs, libint2::Operator::nuclear, atoms);
+    S = integrals::compute_1body_ints(basis, libint2::Operator::overlap, atoms);
+    T = integrals::compute_1body_ints(basis, libint2::Operator::kinetic, atoms);
+    V = integrals::compute_1body_ints(basis, libint2::Operator::nuclear, atoms);
     if (verbose) {
       std::cout << "Overlap matrix: \n" << S << std::endl;
       std::cout << "Kinetic energy matrix: \n" << T << std::endl;
@@ -93,7 +97,7 @@ class SCF {
         auto ehf_last = ehf;
         auto D_last = D;
 
-        F = H + build_rhf_fock(obs.shells(), D);
+        F = H + build_rhf_fock(basis.shells(), D);
         if (verbose && iter == 1) {
           std::cout << "Initial Fock Matrix: \n" << F << std::endl;
         }
@@ -145,9 +149,9 @@ class SCF {
 
         // New Fock Matrices
         Falpha = H;
-        Falpha += build_uhf_fock(obs.shells(), D, Dalpha);
+        Falpha += build_uhf_fock(basis.shells(), D, Dalpha);
         Fbeta = H;
-        Fbeta += build_uhf_fock(obs.shells(), D, Dbeta);
+        Fbeta += build_uhf_fock(basis.shells(), D, Dbeta);
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver1(Falpha, S);
         auto eps_alpha = solver1.eigenvalues();
@@ -186,6 +190,8 @@ class SCF {
       }
       scf_energy = euhf + nuclear_repulsion;
     }  // UHF block
+
+    std::cout << "SCF Energy: " << scf_energy << std::endl;
   };
 
   // Function declarations
