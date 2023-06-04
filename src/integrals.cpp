@@ -3,6 +3,7 @@
 //
 
 #include "integrals.h"
+#include "core.h"
 
 namespace qc::integrals {
 
@@ -207,6 +208,81 @@ Tensor transform_ao_to_mo(const Tensor &eri, const Matrix &coeff_a,
   // don't need other three tensors anymore
   pq_kl(0, 0, 0, 0), pj_kl(0, 0, 0, 0), pq_rl(0, 0, 0, 0);
   return ij_kl;
+}
+
+Tensor transform_to_so(const Tensor &ints_aa, const Tensor &ints_bb,
+                       const Tensor &ints_ab) {
+  const auto n = ints_aa.extent(0) * 2;
+  Tensor result(n, n, n, n);
+  for (auto i = 0; i < n; ++i) {
+    for (auto j = 0; j < n; ++j) {
+      for (auto k = 0; k < n; ++k) {
+        for (auto l = 0; l < n; ++l) {
+          if (i % 2 == 0 && k % 2 == 0 && j % 2 == 0 && l % 2 == 0)
+            result(i, j, k, l) = ints_aa(i / 2, k / 2, j / 2, l / 2) -
+                                 ints_aa(j / 2, k / 2, i / 2, l / 2);
+
+          else if (i % 2 == 1 && k % 2 == 1 && j % 2 == 1 && l % 2 == 1)
+            result(i, j, k, l) = ints_bb(i / 2, k / 2, j / 2, l / 2) -
+                                 ints_bb(j / 2, k / 2, i / 2, l / 2);
+
+          else if (i % 2 == 0 && k % 2 == 0 && j % 2 == 1 && l % 2 == 1)
+            result(i, j, k, l) = ints_ab(i / 2, k / 2, j / 2, l / 2);
+
+          else if (i % 2 == 1 && k % 2 == 1 && j % 2 == 0 && l % 2 == 0)
+            result(i, j, k, l) = ints_ab(i / 2, k / 2, j / 2, l / 2);
+
+          else if (i % 2 == 1 && k % 2 == 0 && j % 2 == 0 && l % 2 == 1)
+            result(i, j, k, l) = -ints_ab(j / 2, k / 2, i / 2, l / 2);
+
+          else if (i % 2 == 0 && k % 2 == 1 && j % 2 == 1 && l % 2 == 0)
+            result(i, j, k, l) = -ints_ab(j / 2, k / 2, i / 2, l / 2);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+Tensor build_fock_tensor(const Tensor &F, const int &no, const int &nv) {
+  Tensor result(no, no, nv, nv);  // E_{ijab}
+  for (auto i = 0; i < no; ++i) {
+    for (auto j = 0; j < no; ++j) {
+      for (auto a = 0; a < nv; ++a) {
+        for (auto b = 0; b < nv; ++b) {
+          result(i, j, a, b) =
+              F(i, i) + F(j, j) - F(no + a, no + a) - F(no + b, no + b);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+Tensor slice_ints(const Tensor &so_ints, const int &no, const int &nv,
+                  const std::string &shape) {
+  // For shape
+  auto n1 = (shape[0] == 'o') * no + (shape[0] == 'v') * nv;
+  auto n2 = (shape[1] == 'o') * no + (shape[1] == 'v') * nv;
+  auto n3 = (shape[2] == 'o') * no + (shape[2] == 'v') * nv;
+  auto n4 = (shape[3] == 'o') * no + (shape[3] == 'v') * nv;
+
+  auto m1 = (shape[0] == 'v') * no;
+  auto m2 = (shape[1] == 'v') * no;
+  auto m3 = (shape[2] == 'v') * no;
+  auto m4 = (shape[3] == 'v') * no;
+
+  Tensor int_slice(n1, n2, n3, n4);
+  for (auto p = 0; p < n1; ++p) {
+    for (auto q = 0; q < n2; ++q) {
+      for (auto r = 0; r < n3; ++r) {
+        for (auto s = 0; s < n4; ++s) {
+          int_slice(p, q, r, s) = so_ints(p + m1, q + m2, r + m3, s + m4);
+        }
+      }
+    }
+  }
+  return int_slice;
 }
 
 }  // namespace qc::integrals
