@@ -30,7 +30,8 @@ class SCF {
   real_t scf_energy;
   Matrix D, Dalpha, Dbeta;
   Matrix F, Falpha, Fbeta;
-  Matrix Calpha, Cbeta;
+  Matrix C, Calpha, Cbeta;
+  Matrix eps, eps_alpha, eps_beta;
   real_t nuclear_repulsion;
 
   /// @brief computes scf energy for RHF or UHF reference
@@ -103,8 +104,8 @@ class SCF {
         }
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver(F, S);
-        auto eps = solver.eigenvalues();
-        auto C = solver.eigenvectors();
+        eps = solver.eigenvalues();
+        C = solver.eigenvectors();
 
         auto C_occ = C.leftCols(ndocc);
         D = C_occ * C_occ.transpose();
@@ -154,11 +155,11 @@ class SCF {
         Fbeta += build_uhf_fock(basis.shells(), D, Dbeta);
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver1(Falpha, S);
-        auto eps_alpha = solver1.eigenvalues();
+        eps_alpha = solver1.eigenvalues();
         Calpha = solver1.eigenvectors();
 
         Eigen::GeneralizedSelfAdjointEigenSolver<Matrix> solver2(Fbeta, S);
-        auto eps_beta = solver2.eigenvalues();
+        eps_beta = solver2.eigenvalues();
         Cbeta = solver2.eigenvectors();
 
         // Density Matrices
