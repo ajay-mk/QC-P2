@@ -244,7 +244,20 @@ Tensor transform_to_so(const Tensor &ints_aa, const Tensor &ints_bb,
   return result;
 }
 
-Tensor build_fock_tensor(const Tensor &F, const int &no, const int &nv) {
+Tensor build_so_energies(const Matrix &eps_a, const Matrix &eps_b,
+                         const int &nao) {
+  const auto n = nao * 2;
+  Tensor eps_so(n, n);
+  for (auto i = 0; i < n; ++i) {
+    if (i % 2 == 0)
+      eps_so(i, i) = eps_a(i / 2);
+    else if (i % 2 == 1)
+      eps_so(i, i) = eps_b(i / 2);
+  }
+  return eps_so;
+}
+
+Tensor build_energy_denom(const Tensor &F, const int &no, const int &nv) {
   Tensor result(no, no, nv, nv);  // E_{ijab}
   for (auto i = 0; i < no; ++i) {
     for (auto j = 0; j < no; ++j) {

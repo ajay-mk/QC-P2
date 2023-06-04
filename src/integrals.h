@@ -54,12 +54,20 @@ Tensor transform_ao_to_mo(const Tensor &eri, const Matrix &coeff_a,
 Tensor transform_to_so(const Tensor &ints_aa, const Tensor &ints_bb,
                        const Tensor &ints_ab);
 
+/// @brief constructs a tensor with energies in spin-orbital basis
+/// @param eps_a orbital energies, alpha spin case
+/// @param eps_b orbital energies, beta spin case
+/// @param nao number of atomic orbitals
+/// @return btas::Tensor of energies
+Tensor build_so_energies(const Matrix &eps_a, const Matrix &eps_b,
+                         const int &nao);
+
 /// @brief builds E_{ij}^{ab} tensor with diagonal elements of the fock matrix
 /// @param F fock matrix integrals in spin-orbital basis
 /// @param no number of occupied orbitals in spin-orbital basis
 /// @param nv number of virtual orbitals in spin-orbital basis
 /// @return btas::Tensor of diagonal elements of the fock matrix
-Tensor build_fock_tensor(const Tensor &F, const int &no, const int &nv);
+Tensor build_energy_denom(const Tensor &F, const int &no, const int &nv);
 
 /// @brief slices the integrals in specified shape
 /// @param so_ints integrals in spin-orbital basis
