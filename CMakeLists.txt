@@ -28,7 +28,7 @@ FetchContent_MakeAvailable(json)
 find_package(Libint2 REQUIRED)
 
 add_subdirectory(src)
-add_subdirectory(qc)
+#add_subdirectory(qc)
 #add_subdirectory(tests)
 
 # optionally add doxygen target to generate documentation
