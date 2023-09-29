@@ -28,6 +28,7 @@ typedef Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 // Structs
 struct input {
   std::string geom_file;
+  // TODO: Fix the path; instead of using the full path, use relative path
   std::string type;
   std::string ref;
   std::string basis;

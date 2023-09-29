@@ -56,7 +56,7 @@ input read_config(const std::string &config_file) {
   assert((config.ref == "RHF" || config.ref == "UHF") &&
          "Unsupported reference in input");
 
-  // try and catch block for cc_conv <= scf_conv
+  // try and catch block for cc_conv < scf_conv
   try {
     if (config.cc_conv < config.scf_conv) {
       throw std::invalid_argument(
