@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.8.2)
 
 project(QC VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
-include(FetchContent)
 
+# Include CMake modules
+include(FetchContent)
 include(CTest)
 
 #Prerequisites
@@ -34,11 +35,11 @@ add_subdirectory(src)
 # optionally add doxygen target to generate documentation
 option(BUILD_DOCS "Enable building of documentation (requires Doxygen)" OFF)
 
-#if(BUILD_DOCS)
-#    find_package(Doxygen REQUIRED)
-#    set(DOXYGEN_EXCLUDE_PATTERNS "${CMAKE_SOURCE_DIR}/ext/*")
-#    doxygen_add_docs(doxygen
-#            ${CMAKE_SOURCE_DIR}
-#            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#            )
-#endif()
+if(BUILD_DOCS)
+    find_package(Doxygen REQUIRED)
+    set(DOXYGEN_EXCLUDE_PATTERNS "${CMAKE_SOURCE_DIR}/ext/*")
+    doxygen_add_docs(doxygen
+            ${CMAKE_SOURCE_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            )
+endif()
