@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "../src/core.h"
+#include "../src/mppt.h"
 #include "../src/scf.h"
 
 int main(int argc, char *argv[]) {
@@ -12,5 +13,6 @@ int main(int argc, char *argv[]) {
   const auto config = core::read_config(argv[1]);
   const auto atoms = core::read_geometry(config.geom_file);
 
-  auto scf = SCF(atoms, config);
+  //  auto scf = SCF(atoms, config);
+  auto mp2 = MP2(atoms, config);
 }

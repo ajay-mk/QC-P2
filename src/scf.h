@@ -238,6 +238,9 @@ class SCF {
   real_t uhf_energy(const Matrix &D, const Matrix &Dalpha, const Matrix &Dbeta,
                     const Matrix &H, const Matrix &Falpha, const Matrix &Fbeta);
 
+  // Friend Classes
+  friend class MP2;
+
 };  // class SCF
 
 }  // namespace qc
