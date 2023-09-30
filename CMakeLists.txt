@@ -7,6 +7,13 @@ set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 include(CTest)
 
+# set default build type to debug
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 #Prerequisites
 # BTAS
 FetchContent_Declare(
