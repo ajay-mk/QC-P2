@@ -2,8 +2,8 @@
 // Created by Ajay Melekamburath on 5/14/23.
 //
 
-#include "integrals.h"
-#include "core.h"
+#include <qc/core.h>
+#include <qc/integrals.h>
 
 namespace qc::integrals {
 

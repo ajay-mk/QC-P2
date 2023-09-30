@@ -5,9 +5,10 @@
 #ifndef QC_MPPT_H
 #define QC_MPPT_H
 
+#include <qc/core.h>
+#include <qc/integrals.h>
+#include <qc/scf.h>
 #include <tuple>
-#include "core.h"
-#include "scf.h"
 
 namespace qc {
 

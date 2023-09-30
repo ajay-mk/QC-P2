@@ -1,9 +1,9 @@
 #include <iomanip>
 #include <iostream>
 
-#include "../qc/core.h"
-#include "../qc/mppt.h"
-#include "../qc/scf.h"
+#include <qc/core.h>"
+#include <qc/mppt.h>
+#include <qc/scf.h>
 
 int main(int argc, char *argv[]) {
   using namespace qc;

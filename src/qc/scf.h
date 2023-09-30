@@ -12,8 +12,8 @@
 
 #include <Eigen/Eigenvalues>
 
-#include "core.h"
-#include "integrals.h"
+#include <qc/core.h>
+#include <qc/integrals.h>
 
 namespace qc {
 

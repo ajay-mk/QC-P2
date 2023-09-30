@@ -2,7 +2,7 @@
 // Created by Ajay Melekamburath on 5/25/23.
 //
 
-#include "mppt.h"
+#include <qc/mppt.h>
 
 namespace qc {
 std::tuple<Tensor, real_t> MP2::run_mp2(const Tensor& oovv, const Tensor& D) {

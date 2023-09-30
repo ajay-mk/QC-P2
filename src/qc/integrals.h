@@ -5,7 +5,7 @@
 #ifndef QC_INTEGRALS_H
 #define QC_INTEGRALS_H
 
-#include "core.h"
+#include <qc/core.h>
 
 // Libint Gaussian integrals library
 #include <libint2/chemistry/sto3g_atomic_density.h>

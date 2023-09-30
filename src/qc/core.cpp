@@ -2,7 +2,7 @@
 // Created by Ajay Melekamburath on 5/13/23.
 //
 
-#include "core.h"
+#include <qc/core.h>
 
 namespace qc::core {
 std::vector<libint2::Atom> read_geometry(const std::string &filename) {
